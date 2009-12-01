@@ -1,0 +1,7 @@
+This directory contains source patches for the following IMP revision:
+
+  http://dev.eclipse.org/svnroot/technology/org.eclipse.imp@r20408
+
+Note that building IMP from source code is not required for building Spoofax/IMP;
+instead, the latest Spoofax/IMP binary plugin can be installed and used as a
+baseline for rebuilding the remainder of the components.

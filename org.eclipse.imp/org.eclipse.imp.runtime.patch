@@ -1,0 +1,143 @@
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java	(working copy)
+@@ -21,6 +21,8 @@
+ import java.util.List;
+ import java.util.Map;
+ 
++import org.eclipse.core.resources.IFile;
++import org.eclipse.core.resources.ResourcesPlugin;
+ import org.eclipse.core.runtime.IConfigurationElement;
+ import org.eclipse.core.runtime.IExtensionPoint;
+ import org.eclipse.core.runtime.IPath;
+@@ -134,7 +136,7 @@
+ 	public static Language findLanguage(IEditorInput editorInput, IDocumentProvider docProvider) {
+ 		if (!sIsFullyInitialized)
+ 			initializeRegistryAsNeeded();
+-		IPath path= EditorInputUtils.getPath(editorInput);
++		IPath path= EditorInputUtils.getFile(editorInput).getLocation(); // LK
+ 
+ 		return findLanguage(path, docProvider.getDocument(editorInput));
+ 	}
+@@ -164,7 +166,9 @@
+ 		            LanguageValidator validator = lang.getValidator();
+ 
+ 		            if (validator != null && docContents != null) {
+-		                if (validator.validate(docContents)) {
++		            	// LK: needed for MetaFileLanguageValidator
++		            	IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
++		            	if (validator.validate(file) ||validator.validate(docContents)) {
+ 		                    return lang;
+ 		                }
+ 		            } else {
+@@ -383,7 +387,9 @@
+         for (String ext : extensions) {
+ 	        IFileEditorMapping mapping= findMappingFor(ext, mappings);
+ 
+-	        if (mapping == null || mapping.getDefaultEditor().getId().equals(sUniversalEditor.getId())) {
++	        if (mapping == null
++	        		|| (!(mapping instanceof IMPFileEditorMapping) // LK: mapping may already be a IMPFileEditorMapping 
++	        		     && mapping.getDefaultEditor().getId().equals(sUniversalEditor.getId()))) {
+ 	            // Replace the file editor mapping even if it already pointed to the universal editor,
+ 	            // since the persisted association turns into a FileEditorMapping when re-read, thus
+ 	            // losing the icon (which FileEditorMapping gets from the IEditorDescriptor).
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java	(working copy)
+@@ -29,6 +29,7 @@
+ import org.eclipse.jface.text.IDocument;
+ import org.eclipse.ui.IEditorInput;
+ import org.eclipse.ui.IEditorPart;
++import org.eclipse.ui.texteditor.AbstractTextEditor;
+ import org.eclipse.ui.texteditor.IDocumentProvider;
+ 
+ /**
+@@ -64,7 +65,7 @@
+     }
+ 
+     public IStatus run(IProgressMonitor monitor) {
+-        if (fParseController == null || fDocumentProvider == null) {
++        if (fParseController == null || ((AbstractTextEditor) fEditorPart).getDocumentProvider() == null) { // LK: test if document provider is null to find out if editor was closed
+             /* Editor was closed, or no parse controller */
+             return Status.OK_STATUS;
+         }
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java	(working copy)
+@@ -109,6 +109,9 @@
+         IRegion bigRegion= fColorer.calculateDamageExtent(region, fParseCtlr);
+ 
+         if (bigRegion != null) {
++        	// LK: (no changes, just a comment)
++        	// No synchronized statement here avoids a deadlock in the colorer implementation,
++        	// which might need main thread access to create new SWT Color Objects 
+             fWorkItems.push(bigRegion);
+         }
+     }
+@@ -157,7 +160,7 @@
+             int offset= locator.getStartOffset(token);
+             int end= locator.getEndOffset(token);
+ 
+-            if (offset <= prevEnd && end >= prevOffset) {
++            if (offset <= prevEnd /*&& end >= prevOffset*/) { // LK: Avoid illegal styleRange
+                 continue;
+             }
+             changeTokenPresentation(parseController, presentation, token, locator);
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java	(working copy)
+@@ -42,6 +42,7 @@
+ import org.eclipse.imp.editor.internal.AnnotationCreator;
+ import org.eclipse.imp.editor.internal.EditorErrorTickUpdater;
+ import org.eclipse.imp.editor.internal.FoldingController;
++import org.eclipse.imp.editor.internal.PresentationController;
+ import org.eclipse.imp.editor.internal.ProblemMarkerManager;
+ import org.eclipse.imp.editor.internal.ToggleBreakpointsAdapter;
+ import org.eclipse.imp.help.IMPHelp;
+@@ -257,6 +258,16 @@
+         setInsertMode(SMART_INSERT);
+         fProblemMarkerManager= new ProblemMarkerManager();
+     }
++    
++    public ServiceControllerManager getServiceControllerManager() { // LK
++        return fServiceControllerManager;
++    }
++    
++    public void updateColoring(Region region) { // LK
++        PresentationController presentation = fServiceControllerManager.getPresentationController();
++		presentation.damage(region);
++        presentation.update(fLanguageServiceManager.getParseController(), new NullProgressMonitor());
++    }
+ 
+     public Object getAdapter(Class required) {
+         if (IContentOutlinePage.class.equals(required)) {
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceCache.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceCache.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceCache.java	(working copy)
+@@ -17,7 +17,7 @@
+ public class PreferenceCache {
+     public static boolean emitMessages= false;
+ 
+-    public static int tabWidth= 8;
++    public static int tabWidth= 4; // LK: sane default tab width
+ 
+     public static Font sourceFont;
+ 
+Index: org.eclipse.imp.runtime/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.runtime/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.runtime/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: IMP Runtime (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.runtime; singleton:=true
+-Bundle-Version: 0.1.101
++Bundle-Version: 0.1.101.qualifier
+ Bundle-Activator: org.eclipse.imp.runtime.RuntimePlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
