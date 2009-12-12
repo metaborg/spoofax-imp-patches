@@ -63,6 +63,17 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
              /* Editor was closed, or no parse controller */
              return Status.OK_STATUS;
          }
+@@ -82,8 +83,9 @@
+             // Just make sure the document contents gets parsed once (and only once).
+             fMsgHandler.clearMessages();
+             fParseController.parse(document.get(), monitor);
+-            if (!monitor.isCanceled())
++            if (!monitor.isCanceled()) {
+                 notifyModelListeners(monitor);
++            }
+         } catch (Exception e) {
+             ErrorHandler.reportError("Error running parser for language " + fParseController.getLanguage().getName() + " and input " + editorInput.getName() + ":", e);
+             // RMF 8/2/2006 - Notify the AST listeners even on an exception - the compiler front end
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java	(revision 22255)
@@ -115,6 +126,60 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      public Object getAdapter(Class required) {
          if (IContentOutlinePage.class.equals(required)) {
+@@ -1771,7 +1782,8 @@
+                 if (fServiceControllerManager.getPresentationController() != null) {
+ //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
+                     fServiceControllerManager.getPresentationController().damage(damage);
+-                    if (hyperlinkRestore) {
++                    // LK: just always color for post-marker color correctness
++                    if (hyperlinkRestore || true) {
+ //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
+                         fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
+                     }
+@@ -1845,6 +1857,7 @@
+     }
+ 
+     public IParseController getParseController() {
++    	if (fLanguageServiceManager == null) return null; // LK
+         return fLanguageServiceManager.getParseController();
+     }
+     
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/utils/AnnotationUtils.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/utils/AnnotationUtils.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/utils/AnnotationUtils.java	(working copy)
+@@ -21,6 +21,7 @@
+ import org.eclipse.jface.text.Position;
+ import org.eclipse.jface.text.source.Annotation;
+ import org.eclipse.jface.text.source.IAnnotationModel;
++import org.eclipse.jface.text.source.ILineDiffInfo;
+ import org.eclipse.jface.text.source.ISourceViewer;
+ import org.eclipse.jface.text.source.projection.AnnotationBag;
+ 
+@@ -30,6 +31,7 @@
+ 
+     public static String formatAnnotationList(List<Annotation> annotations) {
+         if (annotations != null) {
++            removeLineDiffInfo(annotations); // LK
+             if (annotations.size() == 1) {
+                 // optimization
+                 Annotation annotation= (Annotation) annotations.get(0);
+@@ -52,6 +54,15 @@
+         return null;
+     }
+ 
++	private static void removeLineDiffInfo(List<Annotation> annotations) { // LK
++		if (annotations == null) return;
++		for (Iterator<Annotation> iter = annotations.iterator(); iter.hasNext(); ) {
++    		Annotation annotation = iter.next();
++    		if (annotation instanceof ILineDiffInfo)
++    			iter.remove();
++    	}
++	}
++	
+     public static IAnnotationModel getAnnotationModel(ISourceViewer viewer) {
+         // if (viewer instanceof ISourceViewerExtension2) {
+         // ISourceViewerExtension2 extension= (ISourceViewerExtension2) viewer;
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceCache.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceCache.java	(revision 22255)
