@@ -42,6 +42,22 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  	            // Replace the file editor mapping even if it already pointed to the universal editor,
  	            // since the persisted association turns into a FileEditorMapping when re-read, thus
  	            // losing the icon (which FileEditorMapping gets from the IEditorDescriptor).
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java	(working copy)
+@@ -48,6 +48,11 @@
+         if (fLanguageServiceManager.getHyperLinkDetector() != null)
+             fHyperLinkController= new SourceHyperlinkController(fLanguageServiceManager.getHyperLinkDetector(), fTextEditor);
+     }
++    
++    public ServiceControllerManager() { // LK: TODO: REMOVE ME
++    	fTextEditor = null;
++    
++    }
+ 
+     public void initialize() {
+         IRegionSelectionService regionSelector= (IRegionSelectionService) fTextEditor.getAdapter(IRegionSelectionService.class);
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java	(revision 22255)
@@ -206,3 +222,11 @@ Index: org.eclipse.imp.runtime/META-INF/MANIFEST.MF
  Bundle-Activator: org.eclipse.imp.runtime.RuntimePlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
+@@ -30,6 +30,7 @@
+  org.eclipse.imp.builder,
+  org.eclipse.imp.core,
+  org.eclipse.imp.editor,
++ org.eclipse.imp.editor.internal,
+  org.eclipse.imp.indexing,
+  org.eclipse.imp.language,
+  org.eclipse.imp.model,
