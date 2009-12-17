@@ -113,6 +113,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
                  continue;
              }
              changeTokenPresentation(parseController, presentation, token, locator);
+@@ -201,7 +204,7 @@
+             	int lastLength = presentation.getLastStyleRange().length;
+             	int end = lastStart + lastLength;
+         		TextPresentation newPresentation = null;
+-            	if (end >= charCount) {
++            	if (end > charCount) { // LK: > not >=
+             		newPresentation = new TextPresentation();
+             		Iterator presIt = presentation.getAllStyleRangeIterator();
+             		while (presIt.hasNext()) {
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java	(revision 22255)
