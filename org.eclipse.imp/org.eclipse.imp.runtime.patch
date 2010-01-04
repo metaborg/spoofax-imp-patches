@@ -16,7 +16,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  		if (!sIsFullyInitialized)
  			initializeRegistryAsNeeded();
 -		IPath path= EditorInputUtils.getPath(editorInput);
-+		IPath path= EditorInputUtils.getFile(editorInput).getLocation(); // LK
++		IPath path= EditorInputUtils.getFile(editorInput).getFullPath(); // LK
  
  		return findLanguage(path, docProvider.getDocument(editorInput));
  	}
@@ -58,6 +58,20 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManag
  
      public void initialize() {
          IRegionSelectionService regionSelector= (IRegionSelectionService) fTextEditor.getAdapter(IRegionSelectionService.class);
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/HyperlinkDetector.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/HyperlinkDetector.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/HyperlinkDetector.java	(working copy)
+@@ -87,7 +87,8 @@
+         // to the beginning of the file and give it a nominal length.
+ 
+         final int targetStart= (nodeLocator.getStartOffset(target) < 0) ? 0 : nodeLocator.getStartOffset(target);
+-        final int targetLength= 0; // nodeLocator.getEndOffset(target) - targetStart + 1;
++        // LK
++        final int targetLength= targetStart == 0 ? 0 : nodeLocator.getEndOffset(target) - targetStart + 1;
+ 
+         // Use the file path info to determine whether the target editor is the same as
+         // the source editor, and initialize the TargetLink accordingly.
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java	(revision 22255)
@@ -94,7 +108,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java	(revision 22255)
 +++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java	(working copy)
-@@ -109,6 +109,9 @@
+@@ -13,6 +13,7 @@
+ 
+ import java.io.PrintStream;
+ import java.util.ArrayList;
++import java.util.EmptyStackException;
+ import java.util.Iterator;
+ import java.util.List;
+ import java.util.Stack;
+@@ -109,6 +110,9 @@
          IRegion bigRegion= fColorer.calculateDamageExtent(region, fParseCtlr);
  
          if (bigRegion != null) {
@@ -104,7 +126,33 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              fWorkItems.push(bigRegion);
          }
      }
-@@ -157,7 +160,7 @@
+@@ -118,13 +122,18 @@
+ //            if (fWorkItems.size() == 0) {
+ //                ConsoleUtil.findConsoleStream(PresentationController.CONSOLE_NAME).println("PresentationController.update() called, but no damage in the work queue?");
+ //            }
+-            synchronized (fWorkItems) {
+-                for(int n= fWorkItems.size() - 1; !monitor.isCanceled() && n >= 0; n--) {
+-                    Region damage= (Region) fWorkItems.get(n);
+-                    changeTextPresentationForRegion(controller, monitor, damage);
+-                }
+-                if (!monitor.isCanceled())
+-                    fWorkItems.removeAllElements();
++        	// LK: locking using fWorkItems as syncroot can result in deadlocks
++            synchronized (this) {
++            	try {
++	                while (!monitor.isCanceled() && !fWorkItems.isEmpty()) {
++	                    Region damage = (Region) fWorkItems.pop();
++	                    changeTextPresentationForRegion(controller, monitor, damage);
++	                }
++	                // if (!monitor.isCanceled())
++	                //    fWorkItems.removeAllElements();
++            	} catch (EmptyStackException e) {
++            		// Ignore
++            	}
+             }
+         }
+     }
+@@ -157,7 +166,7 @@
              int offset= locator.getStartOffset(token);
              int end= locator.getEndOffset(token);
  
@@ -113,7 +161,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
                  continue;
              }
              changeTokenPresentation(parseController, presentation, token, locator);
-@@ -201,7 +204,7 @@
+@@ -190,6 +199,7 @@
+             	// SMS 16 Sep 2008
+             	int charCount;
+             	if (fSourceViewer != null) {
++            		if (fSourceViewer.getDocument() == null) return; // LK: handle closed documents better
+             		charCount = fSourceViewer.getDocument().getLength();
+             	} else {
+             		charCount = 0;
+@@ -201,7 +211,7 @@
              	int lastLength = presentation.getLastStyleRange().length;
              	int end = lastStart + lastLength;
          		TextPresentation newPresentation = null;
@@ -151,7 +207,17 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      public Object getAdapter(Class required) {
          if (IContentOutlinePage.class.equals(required)) {
-@@ -1771,7 +1782,8 @@
+@@ -697,7 +708,8 @@
+         IFile file= EditorInputUtils.getFile(editorInput);
+         IPath filePath= EditorInputUtils.getPath(editorInput);
+         try {
+-            ISourceProject srcProject= (file != null) ? ModelFactory.open(file.getProject()) : null;
++        	// LK: check file.getProject() for null for out-of-workspace files
++            ISourceProject srcProject= (file != null && file.getProject() != null) ? ModelFactory.open(file.getProject()) : null;
+ 
+             fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
+         } catch (ModelException e) {
+@@ -1771,7 +1783,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -161,7 +227,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1857,7 @@
+@@ -1845,6 +1858,7 @@
      }
  
      public IParseController getParseController() {
@@ -169,6 +235,29 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
          return fLanguageServiceManager.getParseController();
      }
      
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java	(working copy)
+@@ -155,6 +155,18 @@
+     public Image getImage() {
+         return null;
+     }
++    
++    public String getNewText() { // LK
++		return fNewText;
++	}
++    
++    public Region getRange() { // LK
++		return fRange;
++	}
++    
++    public String getPrefix() { // LK
++		return fPrefix;
++	}
+ 
+     public IContextInformation getContextInformation() {
+         return null;
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/utils/AnnotationUtils.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/utils/AnnotationUtils.java	(revision 22255)
