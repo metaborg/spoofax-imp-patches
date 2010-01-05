@@ -42,6 +42,20 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  	            // Replace the file editor mapping even if it already pointed to the universal editor,
  	            // since the persisted association turns into a FileEditorMapping when re-read, thus
  	            // losing the icon (which FileEditorMapping gets from the IEditorDescriptor).
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java	(working copy)
+@@ -23,7 +23,8 @@
+ 
+     private Stack<ModelTreeNode> fItemStack= new Stack<ModelTreeNode>();
+ 
+-    public final ModelTreeNode buildTree(Object rootASTNode) {
++    // LK: public interface shouldn't be final
++    public ModelTreeNode buildTree(Object rootASTNode) {
+         fItemStack.push(fModelRoot= createTopItem(new ModelTreeNode(rootASTNode)));
+         try {
+             visitTree(rootASTNode);
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java	(revision 22255)
