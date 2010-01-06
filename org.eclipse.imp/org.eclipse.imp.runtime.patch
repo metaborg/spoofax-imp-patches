@@ -72,20 +72,6 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManag
  
      public void initialize() {
          IRegionSelectionService regionSelector= (IRegionSelectionService) fTextEditor.getAdapter(IRegionSelectionService.class);
-Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/HyperlinkDetector.java
-===================================================================
---- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/HyperlinkDetector.java	(revision 22255)
-+++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/HyperlinkDetector.java	(working copy)
-@@ -87,7 +87,8 @@
-         // to the beginning of the file and give it a nominal length.
- 
-         final int targetStart= (nodeLocator.getStartOffset(target) < 0) ? 0 : nodeLocator.getStartOffset(target);
--        final int targetLength= 0; // nodeLocator.getEndOffset(target) - targetStart + 1;
-+        // LK
-+        final int targetLength= targetStart == 0 ? 0 : nodeLocator.getEndOffset(target) - targetStart + 1;
- 
-         // Use the file path info to determine whether the target editor is the same as
-         // the source editor, and initialize the TargetLink accordingly.
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java	(revision 22255)
