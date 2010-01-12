@@ -286,7 +286,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/utils/AnnotationUtils.java
 +		if (annotations == null) return;
 +		for (Iterator<Annotation> iter = annotations.iterator(); iter.hasNext(); ) {
 +    		Annotation annotation = iter.next();
-+    		if (annotation instanceof ILineDiffInfo)
++    		if (annotation.getText() == null || annotation instanceof ILineDiffInfo)
 +    			iter.remove();
 +    	}
 +	}
