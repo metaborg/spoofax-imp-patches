@@ -218,7 +218,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
              fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
          } catch (ModelException e) {
-@@ -1771,7 +1783,8 @@
+@@ -1491,6 +1503,7 @@
+             ContentAssistant ca= new ContentAssistant();
+             ca.setContentAssistProcessor(fServiceControllerManager.getCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
+             ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
++            ca.enableColoredLabels(true); // LK
+             return ca;
+         }
+ 
+@@ -1771,7 +1784,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -228,7 +236,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1858,7 @@
+@@ -1845,6 +1859,7 @@
      }
  
      public IParseController getParseController() {
