@@ -162,6 +162,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
                  continue;
              }
              changeTokenPresentation(parseController, presentation, token, locator);
+@@ -176,7 +185,7 @@
+         
+        // SMS 21 Jun 2007:  negative (possibly 0) length style ranges seem to cause problems;
+         // but if you have one it should lead to an IllegalArgumentException in changeTextPresentation(..)
+-        if (styleRange.length <= 0 || styleRange.start + styleRange.length > this.fSourceViewer.getDocument().getLength()) {
++        if (styleRange.length <= 0 ||  this.fSourceViewer.getDocument() == null || styleRange.start + styleRange.length > this.fSourceViewer.getDocument().getLength()) {
+         } else {
+             presentation.addStyleRange(styleRange);
+         }
 @@ -190,6 +199,7 @@
              	// SMS 16 Sep 2008
              	int charCount;
