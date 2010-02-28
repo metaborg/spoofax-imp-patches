@@ -200,13 +200,17 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import org.eclipse.imp.editor.internal.ProblemMarkerManager;
  import org.eclipse.imp.editor.internal.ToggleBreakpointsAdapter;
  import org.eclipse.imp.help.IMPHelp;
-@@ -257,6 +258,16 @@
+@@ -257,6 +258,20 @@
          setInsertMode(SMART_INSERT);
          fProblemMarkerManager= new ProblemMarkerManager();
      }
 +    
 +    public ServiceControllerManager getServiceControllerManager() { // LK
 +        return fServiceControllerManager;
++    }
++    
++    public LanguageServiceManager getLanguageServiceManager() { // LK
++        return fLanguageServiceManager;
 +    }
 +    
 +    public void updateColoring(Region region) { // LK
@@ -217,7 +221,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      public Object getAdapter(Class required) {
          if (IContentOutlinePage.class.equals(required)) {
-@@ -697,7 +708,8 @@
+@@ -697,7 +712,8 @@
          IFile file= EditorInputUtils.getFile(editorInput);
          IPath filePath= EditorInputUtils.getPath(editorInput);
          try {
@@ -227,7 +231,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
              fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
          } catch (ModelException e) {
-@@ -1491,6 +1503,7 @@
+@@ -1491,6 +1507,7 @@
              ContentAssistant ca= new ContentAssistant();
              ca.setContentAssistProcessor(fServiceControllerManager.getCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
              ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
@@ -235,7 +239,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
              return ca;
          }
  
-@@ -1771,7 +1784,8 @@
+@@ -1771,7 +1788,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -245,7 +249,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1859,7 @@
+@@ -1845,6 +1863,7 @@
      }
  
      public IParseController getParseController() {
@@ -324,6 +328,19 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceCache.j
 +    public static int tabWidth= 4; // LK: sane default tab width
  
      public static Font sourceFont;
+ 
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceInitializer.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceInitializer.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/preferences/PreferenceInitializer.java	(working copy)
+@@ -42,7 +42,7 @@
+         if (fontData != null && fontData.length > 0)
+             PreferenceConverter.setDefault(store, PreferenceConstants.P_SOURCE_FONT, fontData);
+ 
+-        store.setDefault(PreferenceConstants.P_TAB_WIDTH, 8);
++        store.setDefault(PreferenceConstants.P_TAB_WIDTH, 4); // LK: sane default tab width
+         store.setDefault(PreferenceConstants.P_DUMP_TOKENS, false);
+         store.setDefault(PreferenceConstants.EDITOR_MATCHING_BRACKETS, true);
  
 Index: org.eclipse.imp.runtime/META-INF/MANIFEST.MF
 ===================================================================
