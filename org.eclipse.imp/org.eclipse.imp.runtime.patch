@@ -200,7 +200,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import org.eclipse.imp.editor.internal.ProblemMarkerManager;
  import org.eclipse.imp.editor.internal.ToggleBreakpointsAdapter;
  import org.eclipse.imp.help.IMPHelp;
-@@ -257,6 +258,20 @@
+@@ -257,6 +258,24 @@
          setInsertMode(SMART_INSERT);
          fProblemMarkerManager= new ProblemMarkerManager();
      }
@@ -213,6 +213,10 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
 +        return fLanguageServiceManager;
 +    }
 +    
++    public IPreferenceStore getThePreferenceStore() { // LK
++    	return super.getPreferenceStore();
++    }
++    
 +    public void updateColoring(Region region) { // LK
 +        PresentationController presentation = fServiceControllerManager.getPresentationController();
 +		presentation.damage(region);
@@ -221,7 +225,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      public Object getAdapter(Class required) {
          if (IContentOutlinePage.class.equals(required)) {
-@@ -697,7 +712,8 @@
+@@ -697,7 +716,8 @@
          IFile file= EditorInputUtils.getFile(editorInput);
          IPath filePath= EditorInputUtils.getPath(editorInput);
          try {
@@ -231,7 +235,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
              fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
          } catch (ModelException e) {
-@@ -1491,6 +1507,7 @@
+@@ -1491,6 +1511,7 @@
              ContentAssistant ca= new ContentAssistant();
              ca.setContentAssistProcessor(fServiceControllerManager.getCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
              ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
@@ -239,7 +243,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
              return ca;
          }
  
-@@ -1771,7 +1788,8 @@
+@@ -1771,7 +1792,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -249,7 +253,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1863,7 @@
+@@ -1845,6 +1867,7 @@
      }
  
      public IParseController getParseController() {
@@ -261,7 +265,18 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java	(revision 22255)
 +++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java	(working copy)
-@@ -155,6 +155,18 @@
+@@ -134,7 +134,9 @@
+ 
+     public void apply(IDocument document) {
+         try {
+-            document.replace(fRange.getOffset(), fRange.getLength(), fNewText.substring(fPrefix.length()));
++        	// LK: use accessors
++            Region range = getRange();
++			document.replace(range.getOffset(), range.getLength(), getNewText().substring(getPrefix().length()));
+         } catch (BadLocationException e) {
+             e.printStackTrace();
+         }
+@@ -155,6 +157,18 @@
      public Image getImage() {
          return null;
      }
