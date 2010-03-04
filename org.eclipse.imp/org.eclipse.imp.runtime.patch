@@ -192,7 +192,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java	(revision 22255)
 +++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java	(working copy)
-@@ -42,6 +42,7 @@
+@@ -15,6 +15,7 @@
+ import java.lang.reflect.Method;
+ import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.HashSet;
+ import java.util.Iterator;
+ import java.util.List;
+ import java.util.Map;
+@@ -42,6 +43,7 @@
  import org.eclipse.imp.editor.internal.AnnotationCreator;
  import org.eclipse.imp.editor.internal.EditorErrorTickUpdater;
  import org.eclipse.imp.editor.internal.FoldingController;
@@ -200,7 +208,17 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import org.eclipse.imp.editor.internal.ProblemMarkerManager;
  import org.eclipse.imp.editor.internal.ToggleBreakpointsAdapter;
  import org.eclipse.imp.help.IMPHelp;
-@@ -257,6 +258,24 @@
+@@ -240,6 +242,9 @@
+     private static final String BUNDLE_FOR_CONSTRUCTED_KEYS= MESSAGE_BUNDLE;//$NON-NLS-1$
+ 
+     private static final String IMP_EDITOR_CONTEXT= RuntimePlugin.IMP_RUNTIME + ".imp_editor_context";
++    
++    // LK
++    private final Set<IDocumentListener> onSaveListeners = new HashSet<IDocumentListener>();
+ 
+     static ResourceBundle fgBundleForConstructedKeys= ResourceBundle.getBundle(BUNDLE_FOR_CONSTRUCTED_KEYS);
+ 
+@@ -257,6 +262,32 @@
          setInsertMode(SMART_INSERT);
          fProblemMarkerManager= new ProblemMarkerManager();
      }
@@ -217,6 +235,14 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
 +    	return super.getPreferenceStore();
 +    }
 +    
++    public void addOnSaveListener(IDocumentListener listener) { // LK
++    	onSaveListeners.add(listener);
++    }
++    
++    public void removeOnSaveListener(IDocumentListener listener) { // LK
++    	onSaveListeners.remove(listener);
++    }
++    
 +    public void updateColoring(Region region) { // LK
 +        PresentationController presentation = fServiceControllerManager.getPresentationController();
 +		presentation.damage(region);
@@ -225,7 +251,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      public Object getAdapter(Class required) {
          if (IContentOutlinePage.class.equals(required)) {
-@@ -697,7 +716,8 @@
+@@ -697,7 +728,8 @@
          IFile file= EditorInputUtils.getFile(editorInput);
          IPath filePath= EditorInputUtils.getPath(editorInput);
          try {
@@ -235,7 +261,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
              fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
          } catch (ModelException e) {
-@@ -1491,6 +1511,7 @@
+@@ -1491,6 +1523,7 @@
              ContentAssistant ca= new ContentAssistant();
              ca.setContentAssistProcessor(fServiceControllerManager.getCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
              ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
@@ -243,7 +269,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
              return ca;
          }
  
-@@ -1771,7 +1792,8 @@
+@@ -1771,7 +1804,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -253,7 +279,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1867,7 @@
+@@ -1845,6 +1879,7 @@
      }
  
      public IParseController getParseController() {
@@ -261,6 +287,19 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
          return fLanguageServiceManager.getParseController();
      }
      
+@@ -1861,7 +1896,12 @@
+ 		// SMS 25 Apr 2007:  Removing parser annotations here
+ 		// may not hurt but also doesn't seem to be necessary
+ 		//removeParserAnnotations();
++		DocumentEvent event = new DocumentEvent(getServiceControllerManager().getSourceViewer().getDocument(), 0, 0, null);
++		for (IDocumentListener listener : onSaveListeners)
++			listener.documentAboutToBeChanged(event);
+ 		super.doSave(progressMonitor);
++		for (IDocumentListener listener : onSaveListeners)
++			listener.documentChanged(event);
+ 	}
+ 
+     public void removeParserAnnotations() {
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java	(revision 22255)
