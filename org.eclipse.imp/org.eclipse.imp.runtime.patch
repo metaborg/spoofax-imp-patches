@@ -127,7 +127,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              fWorkItems.push(bigRegion);
          }
      }
-@@ -118,13 +122,18 @@
+@@ -118,13 +122,23 @@
  //            if (fWorkItems.size() == 0) {
  //                ConsoleUtil.findConsoleStream(PresentationController.CONSOLE_NAME).println("PresentationController.update() called, but no damage in the work queue?");
  //            }
@@ -143,6 +143,11 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
 +            	try {
 +	                while (!monitor.isCanceled() && !fWorkItems.isEmpty()) {
 +	                    Region damage = (Region) fWorkItems.pop();
++	                    synchronized (fWorkItems) { // LK: clean up work items queue
++	                    	while (!fWorkItems.isEmpty()
++	                    			&& (fWorkItems.peek().getOffset() >= damage.getOffset() && fWorkItems.peek().getLength() <= damage.getLength()))
++	                    		fWorkItems.pop();
++	                    }
 +	                    changeTextPresentationForRegion(controller, monitor, damage);
 +	                }
 +	                // if (!monitor.isCanceled())
@@ -153,7 +158,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              }
          }
      }
-@@ -157,7 +166,7 @@
+@@ -157,7 +171,7 @@
              int offset= locator.getStartOffset(token);
              int end= locator.getEndOffset(token);
  
@@ -162,7 +167,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
                  continue;
              }
              changeTokenPresentation(parseController, presentation, token, locator);
-@@ -176,7 +185,7 @@
+@@ -176,7 +190,7 @@
          
         // SMS 21 Jun 2007:  negative (possibly 0) length style ranges seem to cause problems;
          // but if you have one it should lead to an IllegalArgumentException in changeTextPresentation(..)
@@ -171,7 +176,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
          } else {
              presentation.addStyleRange(styleRange);
          }
-@@ -190,6 +199,7 @@
+@@ -190,6 +204,7 @@
              	// SMS 16 Sep 2008
              	int charCount;
              	if (fSourceViewer != null) {
@@ -179,7 +184,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              		charCount = fSourceViewer.getDocument().getLength();
              	} else {
              		charCount = 0;
-@@ -201,7 +211,7 @@
+@@ -201,7 +216,7 @@
              	int lastLength = presentation.getLastStyleRange().length;
              	int end = lastStart + lastLength;
          		TextPresentation newPresentation = null;
@@ -200,7 +205,17 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import java.util.Iterator;
  import java.util.List;
  import java.util.Map;
-@@ -42,6 +43,7 @@
+@@ -31,7 +32,9 @@
+ import org.eclipse.core.runtime.CoreException;
+ import org.eclipse.core.runtime.IPath;
+ import org.eclipse.core.runtime.IProgressMonitor;
++import org.eclipse.core.runtime.IStatus;
+ import org.eclipse.core.runtime.NullProgressMonitor;
++import org.eclipse.core.runtime.Status;
+ import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
+ import org.eclipse.debug.ui.actions.ToggleBreakpointAction;
+ import org.eclipse.help.IContextProvider;
+@@ -42,6 +45,7 @@
  import org.eclipse.imp.editor.internal.AnnotationCreator;
  import org.eclipse.imp.editor.internal.EditorErrorTickUpdater;
  import org.eclipse.imp.editor.internal.FoldingController;
@@ -208,7 +223,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import org.eclipse.imp.editor.internal.ProblemMarkerManager;
  import org.eclipse.imp.editor.internal.ToggleBreakpointsAdapter;
  import org.eclipse.imp.help.IMPHelp;
-@@ -240,6 +242,9 @@
+@@ -163,6 +167,7 @@
+ import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
+ import org.eclipse.ui.handlers.IHandlerActivation;
+ import org.eclipse.ui.handlers.IHandlerService;
++import org.eclipse.ui.progress.UIJob;
+ import org.eclipse.ui.texteditor.AbstractTextEditor;
+ import org.eclipse.ui.texteditor.ContentAssistAction;
+ import org.eclipse.ui.texteditor.IEditorStatusLine;
+@@ -240,6 +245,9 @@
      private static final String BUNDLE_FOR_CONSTRUCTED_KEYS= MESSAGE_BUNDLE;//$NON-NLS-1$
  
      private static final String IMP_EDITOR_CONTEXT= RuntimePlugin.IMP_RUNTIME + ".imp_editor_context";
@@ -218,7 +241,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      static ResourceBundle fgBundleForConstructedKeys= ResourceBundle.getBundle(BUNDLE_FOR_CONSTRUCTED_KEYS);
  
-@@ -257,6 +262,32 @@
+@@ -257,6 +265,41 @@
          setInsertMode(SMART_INSERT);
          fProblemMarkerManager= new ProblemMarkerManager();
      }
@@ -244,14 +267,23 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
 +    }
 +    
 +    public void updateColoring(Region region) { // LK
-+        PresentationController presentation = fServiceControllerManager.getPresentationController();
++    	final PresentationController presentation = fServiceControllerManager.getPresentationController();
 +		presentation.damage(region);
-+        presentation.update(fLanguageServiceManager.getParseController(), new NullProgressMonitor());
++		// Must run in main thread in order not to keep further updates waiting
++		UIJob job = new UIJob("Update presentation") {
++			@Override
++			public IStatus runInUIThread(IProgressMonitor monitor) {
++				presentation.update(fLanguageServiceManager.getParseController(), monitor);
++				return Status.OK_STATUS;
++			}
++		};
++		job.setSystem(true);
++		job.schedule();
 +    }
  
      public Object getAdapter(Class required) {
          if (IContentOutlinePage.class.equals(required)) {
-@@ -697,7 +728,8 @@
+@@ -697,7 +740,8 @@
          IFile file= EditorInputUtils.getFile(editorInput);
          IPath filePath= EditorInputUtils.getPath(editorInput);
          try {
@@ -261,7 +293,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
              fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
          } catch (ModelException e) {
-@@ -1491,6 +1523,7 @@
+@@ -1491,6 +1535,7 @@
              ContentAssistant ca= new ContentAssistant();
              ca.setContentAssistProcessor(fServiceControllerManager.getCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
              ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
@@ -269,7 +301,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
              return ca;
          }
  
-@@ -1771,7 +1804,8 @@
+@@ -1771,7 +1816,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -279,7 +311,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1879,7 @@
+@@ -1845,6 +1891,7 @@
      }
  
      public IParseController getParseController() {
@@ -287,7 +319,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
          return fLanguageServiceManager.getParseController();
      }
      
-@@ -1861,7 +1896,12 @@
+@@ -1861,7 +1908,12 @@
  		// SMS 25 Apr 2007:  Removing parser annotations here
  		// may not hurt but also doesn't seem to be necessary
  		//removeParserAnnotations();
