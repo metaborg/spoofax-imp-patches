@@ -122,8 +122,8 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
  
          if (bigRegion != null) {
 +        	// LK: (no changes, just a comment)
-+        	// No synchronized statement here avoids a deadlock in the colorer implementation,
-+        	// which might need main thread access to create new SWT Color Objects 
++        	// Implicit synchronization here risks a deadlock in the colorer implementation,
++        	// which might need main thread access to create new SWT Color Objects
              fWorkItems.push(bigRegion);
          }
      }
@@ -205,17 +205,18 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import java.util.Iterator;
  import java.util.List;
  import java.util.Map;
-@@ -31,7 +32,9 @@
+@@ -31,7 +32,10 @@
  import org.eclipse.core.runtime.CoreException;
  import org.eclipse.core.runtime.IPath;
  import org.eclipse.core.runtime.IProgressMonitor;
 +import org.eclipse.core.runtime.IStatus;
  import org.eclipse.core.runtime.NullProgressMonitor;
++import org.eclipse.core.runtime.OperationCanceledException;
 +import org.eclipse.core.runtime.Status;
  import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
  import org.eclipse.debug.ui.actions.ToggleBreakpointAction;
  import org.eclipse.help.IContextProvider;
-@@ -42,6 +45,7 @@
+@@ -42,6 +46,7 @@
  import org.eclipse.imp.editor.internal.AnnotationCreator;
  import org.eclipse.imp.editor.internal.EditorErrorTickUpdater;
  import org.eclipse.imp.editor.internal.FoldingController;
@@ -223,7 +224,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import org.eclipse.imp.editor.internal.ProblemMarkerManager;
  import org.eclipse.imp.editor.internal.ToggleBreakpointsAdapter;
  import org.eclipse.imp.help.IMPHelp;
-@@ -163,6 +167,7 @@
+@@ -163,6 +168,7 @@
  import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
  import org.eclipse.ui.handlers.IHandlerActivation;
  import org.eclipse.ui.handlers.IHandlerService;
@@ -231,7 +232,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  import org.eclipse.ui.texteditor.AbstractTextEditor;
  import org.eclipse.ui.texteditor.ContentAssistAction;
  import org.eclipse.ui.texteditor.IEditorStatusLine;
-@@ -240,6 +245,9 @@
+@@ -240,6 +246,9 @@
      private static final String BUNDLE_FOR_CONSTRUCTED_KEYS= MESSAGE_BUNDLE;//$NON-NLS-1$
  
      private static final String IMP_EDITOR_CONTEXT= RuntimePlugin.IMP_RUNTIME + ".imp_editor_context";
@@ -241,7 +242,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      static ResourceBundle fgBundleForConstructedKeys= ResourceBundle.getBundle(BUNDLE_FOR_CONSTRUCTED_KEYS);
  
-@@ -257,6 +265,41 @@
+@@ -257,6 +266,41 @@
          setInsertMode(SMART_INSERT);
          fProblemMarkerManager= new ProblemMarkerManager();
      }
@@ -283,7 +284,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
      public Object getAdapter(Class required) {
          if (IContentOutlinePage.class.equals(required)) {
-@@ -697,7 +740,8 @@
+@@ -697,7 +741,8 @@
          IFile file= EditorInputUtils.getFile(editorInput);
          IPath filePath= EditorInputUtils.getPath(editorInput);
          try {
@@ -293,7 +294,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
              fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
          } catch (ModelException e) {
-@@ -1491,6 +1535,7 @@
+@@ -1491,6 +1536,7 @@
              ContentAssistant ca= new ContentAssistant();
              ca.setContentAssistProcessor(fServiceControllerManager.getCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
              ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
@@ -301,7 +302,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
              return ca;
          }
  
-@@ -1771,7 +1816,8 @@
+@@ -1771,7 +1817,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -311,7 +312,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1891,7 @@
+@@ -1845,6 +1892,7 @@
      }
  
      public IParseController getParseController() {
@@ -319,7 +320,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
          return fLanguageServiceManager.getParseController();
      }
      
-@@ -1861,7 +1908,12 @@
+@@ -1861,7 +1909,12 @@
  		// SMS 25 Apr 2007:  Removing parser annotations here
  		// may not hurt but also doesn't seem to be necessary
  		//removeParserAnnotations();
