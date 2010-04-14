@@ -133,7 +133,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
  
  /**
   * A class that does the real work of repairing the text presentation for an associated ISourceViewer.
-@@ -109,22 +111,36 @@
+@@ -109,22 +111,38 @@
          IRegion bigRegion= fColorer.calculateDamageExtent(region, fParseCtlr);
  
          if (bigRegion != null) {
@@ -146,7 +146,9 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
  
      public void update(IParseController controller, IProgressMonitor monitor) {
 -        if (!monitor.isCanceled()) {
-+        // LK: don't run in the main UI thread since it would risk dead locks based on SWT
++        // LK: only run in the UI thread so color objects are created there
++    	if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() == null)
++        	return;
 +    	if (!monitor.isCanceled()) {
  //            if (fWorkItems.size() == 0) {
  //                ConsoleUtil.findConsoleStream(PresentationController.CONSOLE_NAME).println("PresentationController.update() called, but no damage in the work queue?");
@@ -178,7 +180,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              }
          }
      }
-@@ -157,7 +173,7 @@
+@@ -157,7 +175,7 @@
              int offset= locator.getStartOffset(token);
              int end= locator.getEndOffset(token);
  
@@ -187,7 +189,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
                  continue;
              }
              changeTokenPresentation(parseController, presentation, token, locator);
-@@ -176,7 +192,7 @@
+@@ -176,7 +194,7 @@
          
         // SMS 21 Jun 2007:  negative (possibly 0) length style ranges seem to cause problems;
          // but if you have one it should lead to an IllegalArgumentException in changeTextPresentation(..)
@@ -196,7 +198,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
          } else {
              presentation.addStyleRange(styleRange);
          }
-@@ -190,6 +206,7 @@
+@@ -190,6 +208,7 @@
              	// SMS 16 Sep 2008
              	int charCount;
              	if (fSourceViewer != null) {
@@ -204,7 +206,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              		charCount = fSourceViewer.getDocument().getLength();
              	} else {
              		charCount = 0;
-@@ -201,7 +218,7 @@
+@@ -201,7 +220,7 @@
              	int lastLength = presentation.getLastStyleRange().length;
              	int end = lastStart + lastLength;
          		TextPresentation newPresentation = null;
