@@ -11,16 +11,24 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  import org.eclipse.core.runtime.IConfigurationElement;
  import org.eclipse.core.runtime.IExtensionPoint;
  import org.eclipse.core.runtime.IPath;
-@@ -134,7 +136,7 @@
+@@ -134,7 +136,15 @@
  	public static Language findLanguage(IEditorInput editorInput, IDocumentProvider docProvider) {
  		if (!sIsFullyInitialized)
  			initializeRegistryAsNeeded();
 -		IPath path= EditorInputUtils.getPath(editorInput);
-+		IPath path= EditorInputUtils.getFile(editorInput).getFullPath(); // LK
++		
++		// LK: get full path
++		IFile file = EditorInputUtils.getFile(editorInput);
++		IPath path;
++		if (file != null) {
++			path = file.getFullPath();
++		} else {
++			path = EditorInputUtils.getPath(editorInput);
++		}
  
  		return findLanguage(path, docProvider.getDocument(editorInput));
  	}
-@@ -164,7 +166,9 @@
+@@ -164,7 +174,9 @@
  		            LanguageValidator validator = lang.getValidator();
  
  		            if (validator != null && docContents != null) {
@@ -31,7 +39,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  		                    return lang;
  		                }
  		            } else {
-@@ -383,7 +387,10 @@
+@@ -383,7 +395,10 @@
          for (String ext : extensions) {
  	        IFileEditorMapping mapping= findMappingFor(ext, mappings);
  
@@ -117,7 +125,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
  import java.util.Iterator;
  import java.util.List;
  import java.util.Stack;
-@@ -109,6 +110,9 @@
+@@ -37,6 +38,7 @@
+ import org.eclipse.swt.SWT;
+ import org.eclipse.swt.custom.StyleRange;
+ import org.eclipse.swt.widgets.Display;
++import org.eclipse.ui.PlatformUI;
+ 
+ /**
+  * A class that does the real work of repairing the text presentation for an associated ISourceViewer.
+@@ -109,22 +111,36 @@
          IRegion bigRegion= fColorer.calculateDamageExtent(region, fParseCtlr);
  
          if (bigRegion != null) {
@@ -127,7 +143,11 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              fWorkItems.push(bigRegion);
          }
      }
-@@ -118,13 +122,23 @@
+ 
+     public void update(IParseController controller, IProgressMonitor monitor) {
+-        if (!monitor.isCanceled()) {
++        // LK: don't run in the main UI thread since it would risk dead locks based on SWT
++    	if (!monitor.isCanceled()) {
  //            if (fWorkItems.size() == 0) {
  //                ConsoleUtil.findConsoleStream(PresentationController.CONSOLE_NAME).println("PresentationController.update() called, but no damage in the work queue?");
  //            }
@@ -158,7 +178,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              }
          }
      }
-@@ -157,7 +171,7 @@
+@@ -157,7 +173,7 @@
              int offset= locator.getStartOffset(token);
              int end= locator.getEndOffset(token);
  
@@ -167,7 +187,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
                  continue;
              }
              changeTokenPresentation(parseController, presentation, token, locator);
-@@ -176,7 +190,7 @@
+@@ -176,7 +192,7 @@
          
         // SMS 21 Jun 2007:  negative (possibly 0) length style ranges seem to cause problems;
          // but if you have one it should lead to an IllegalArgumentException in changeTextPresentation(..)
@@ -176,7 +196,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
          } else {
              presentation.addStyleRange(styleRange);
          }
-@@ -190,6 +204,7 @@
+@@ -190,6 +206,7 @@
              	// SMS 16 Sep 2008
              	int charCount;
              	if (fSourceViewer != null) {
@@ -184,7 +204,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              		charCount = fSourceViewer.getDocument().getLength();
              	} else {
              		charCount = 0;
-@@ -201,7 +216,7 @@
+@@ -201,7 +218,7 @@
              	int lastLength = presentation.getLastStyleRange().length;
              	int end = lastStart + lastLength;
          		TextPresentation newPresentation = null;
