@@ -113,6 +113,20 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
          } catch (Exception e) {
              ErrorHandler.reportError("Error running parser for language " + fParseController.getLanguage().getName() + " and input " + editorInput.getName() + ":", e);
              // RMF 8/2/2006 - Notify the AST listeners even on an exception - the compiler front end
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/FormattingController.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/FormattingController.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/FormattingController.java	(working copy)
+@@ -33,7 +33,8 @@
+     }
+ 
+     public void formatterStarts(String initialIndentation) {
+-        fFormattingStrategy.formatterStarts(initialIndentation);
++    	if (fFormattingStrategy != null)
++    		fFormattingStrategy.formatterStarts(initialIndentation);
+     }
+ 
+     public String format(String content, boolean isLineStart, String indentation, int[] positions) {
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationController.java	(revision 22255)
@@ -363,16 +377,27 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
          return fLanguageServiceManager.getParseController();
      }
      
-@@ -1861,7 +1917,12 @@
+@@ -1861,7 +1917,23 @@
  		// SMS 25 Apr 2007:  Removing parser annotations here
  		// may not hurt but also doesn't seem to be necessary
  		//removeParserAnnotations();
-+		DocumentEvent event = new DocumentEvent(getServiceControllerManager().getSourceViewer().getDocument(), 0, 0, null);
-+		for (IDocumentListener listener : onSaveListeners)
-+			listener.documentAboutToBeChanged(event);
++		DocumentEvent event = null;
++		try {
++			event = new DocumentEvent(getServiceControllerManager().getSourceViewer().getDocument(), 0, 0, null);
++			for (IDocumentListener listener : onSaveListeners)
++				listener.documentAboutToBeChanged(event);
++		} catch (RuntimeException e) {
++			e.printStackTrace();
++		}
++		
  		super.doSave(progressMonitor);
-+		for (IDocumentListener listener : onSaveListeners)
-+			listener.documentChanged(event);
++		
++		try {
++			for (IDocumentListener listener : onSaveListeners)
++				listener.documentChanged(event);
++		} catch (RuntimeException e) {
++			e.printStackTrace();
++		}
  	}
  
      public void removeParserAnnotations() {
