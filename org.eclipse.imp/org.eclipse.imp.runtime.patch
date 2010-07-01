@@ -93,16 +93,26 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
  import org.eclipse.ui.texteditor.IDocumentProvider;
  
  /**
-@@ -64,7 +65,7 @@
+@@ -37,7 +38,7 @@
+  */
+ // TODO Perhaps this should be driven off of the "IReconcilingStrategy" mechanism?
+ public class ParserScheduler extends Job {
+-    private final IParseController fParseController;
++    private IParseController fParseController;
+ 
+     private final IEditorPart fEditorPart;
+ 
+@@ -64,7 +65,8 @@
      }
  
      public IStatus run(IProgressMonitor monitor) {
 -        if (fParseController == null || fDocumentProvider == null) {
-+        if (fParseController == null || ((AbstractTextEditor) fEditorPart).getDocumentProvider() == null) { // LK: test if document provider is null to find out if editor was closed
++    	 // LK: test if document provider is null to find out if editor was closed
++        if (fParseController == null || ((AbstractTextEditor) fEditorPart).getDocumentProvider() == null) {
              /* Editor was closed, or no parse controller */
              return Status.OK_STATUS;
          }
-@@ -82,8 +83,9 @@
+@@ -82,10 +84,12 @@
              // Just make sure the document contents gets parsed once (and only once).
              fMsgHandler.clearMessages();
              fParseController.parse(document.get(), monitor);
@@ -111,8 +121,21 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
                  notifyModelListeners(monitor);
 +            }
          } catch (Exception e) {
-             ErrorHandler.reportError("Error running parser for language " + fParseController.getLanguage().getName() + " and input " + editorInput.getName() + ":", e);
+-            ErrorHandler.reportError("Error running parser for language " + fParseController.getLanguage().getName() + " and input " + editorInput.getName() + ":", e);
++        	// LK: null check
++            ErrorHandler.reportError("Error running parser for language " + (fParseController == null ? "null" : fParseController.getLanguage().getName()) + " and input " + editorInput.getName() + ":", e);
              // RMF 8/2/2006 - Notify the AST listeners even on an exception - the compiler front end
+             // may have failed at some phase, but there may be enough info to drive IDE services.
+             notifyModelListeners(monitor);
+@@ -146,4 +150,8 @@
+             RuntimePlugin.getInstance().writeInfoMsg("No AST; bypassing listener notification.");
+         }
+     }
++
++	public void dispose() { // LK
++		fParseController = null;
++	}
+ }
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/FormattingController.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/FormattingController.java	(revision 22255)
@@ -336,7 +359,18 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  
              fLanguageServiceManager.getParseController().initialize(filePath, srcProject, fAnnotationCreator);
          } catch (ModelException e) {
-@@ -1470,7 +1517,13 @@
+@@ -1099,6 +1146,10 @@
+           fActionBars = null;
+         }
+         
++        if (fParserScheduler != null) { // LK
++        	fParserScheduler.dispose();
++        }
++        
+         super.dispose();
+     }
+ 
+@@ -1470,7 +1521,13 @@
          public int getTabWidth(ISourceViewer sourceViewer) {
              boolean langSpecificSetting= fLangSpecificPrefs != null && fLangSpecificPrefs.isDefined(PreferenceConstants.P_TAB_WIDTH);
  
@@ -351,7 +385,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
          }
  
          public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer) {
-@@ -1491,6 +1544,7 @@
+@@ -1491,6 +1548,7 @@
              ContentAssistant ca= new ContentAssistant();
              ca.setContentAssistProcessor(fServiceControllerManager.getCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
              ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
@@ -359,7 +393,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
              return ca;
          }
  
-@@ -1771,7 +1825,8 @@
+@@ -1771,7 +1829,8 @@
                  if (fServiceControllerManager.getPresentationController() != null) {
  //                  System.out.println("Scheduling repair for damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                      fServiceControllerManager.getPresentationController().damage(damage);
@@ -369,7 +403,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  //                      System.out.println("** Forcing repair for hyperlink damage to region " + damage.getOffset() + ":" + damage.getLength() + " in doc of length " + fDocument.getLength());
                          fServiceControllerManager.getPresentationController().update(fLanguageServiceManager.getParseController(), fProgressMonitor);
                      }
-@@ -1845,6 +1900,7 @@
+@@ -1845,6 +1904,7 @@
      }
  
      public IParseController getParseController() {
@@ -377,7 +411,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
          return fLanguageServiceManager.getParseController();
      }
      
-@@ -1861,7 +1917,23 @@
+@@ -1861,7 +1921,23 @@
  		// SMS 25 Apr 2007:  Removing parser annotations here
  		// may not hurt but also doesn't seem to be necessary
  		//removeParserAnnotations();
