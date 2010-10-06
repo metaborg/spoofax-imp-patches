@@ -101,7 +101,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
  import org.eclipse.imp.services.IAutoEditStrategy;
  import org.eclipse.imp.services.ILanguageSyntaxProperties;
  import org.eclipse.imp.services.base.DefaultAutoIndentStrategy;
-@@ -63,7 +63,6 @@
+@@ -35,6 +35,7 @@
+ import org.eclipse.swt.graphics.Color;
+ import org.eclipse.swt.graphics.Point;
+ import org.eclipse.swt.widgets.Composite;
++// LK: backported from revision 22255
+ 
+ public class StructuredSourceViewer extends ProjectionViewer {
+     /**
+@@ -63,7 +64,6 @@
       */
      public static final int MARK_OCCURRENCES= 55;
  
@@ -109,7 +117,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
      /**
       * Text operation code for indenting the currently selected text.
       */
-@@ -77,16 +76,8 @@
+@@ -77,16 +77,8 @@
  
      private IAutoEditStrategy fAutoEditStrategy;
  
@@ -126,7 +134,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
      public StructuredSourceViewer(Composite parent, IVerticalRuler verticalRuler, IOverviewRuler overviewRuler, boolean showAnnotationsOverview, int styles) {
          super(parent, verticalRuler, overviewRuler, showAnnotationsOverview, styles);
      }
-@@ -139,8 +130,7 @@
+@@ -139,8 +131,7 @@
          }
          super.doOperation(operation);
      }
@@ -136,7 +144,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
      public void setParseController(IParseController parseController) {
      	fParseController = parseController;
      }
-@@ -152,13 +142,14 @@
+@@ -152,13 +143,14 @@
      private void doToggleComment() {
          ILanguageSyntaxProperties syntaxProps= fParseController.getSyntaxProperties();
  
@@ -153,7 +161,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
  
      	if (doc instanceof IDocumentExtension4) {
      	    IDocumentExtension4 extension= (IDocumentExtension4) doc;
-@@ -172,22 +163,35 @@
+@@ -172,22 +164,35 @@
              final int startLine= doc.getLineOfOffset(selStart);
              int endLine= doc.getLineOfOffset(selEnd);
  
@@ -202,7 +210,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
              }
          } catch (BadLocationException e) {
              e.printStackTrace();
-@@ -200,8 +204,54 @@
+@@ -200,8 +205,54 @@
          }
      }
  
@@ -259,7 +267,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
          IDocument doc= this.getDocument();
          DocumentRewriteSession rewriteSession= null;
          Point p= this.getSelectedRange();
-@@ -218,18 +268,16 @@
+@@ -218,18 +269,16 @@
              final int startLine= doc.getLineOfOffset(selStart);
              int endLine= doc.getLineOfOffset(selEnd);
  
@@ -282,7 +290,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
                  cmd.text= Character.toString('\t');
                  cmd.doit= true;
                  cmd.shiftsCaret= false;
-@@ -237,7 +285,7 @@
+@@ -237,7 +286,7 @@
                  doc.replace(cmd.offset, cmd.length, cmd.text);
              }
          } catch (BadLocationException e) {
@@ -291,7 +299,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
          } finally {
              if (doc instanceof IDocumentExtension4) {
                  IDocumentExtension4 extension= (IDocumentExtension4) doc;
-@@ -247,6 +295,21 @@
+@@ -247,6 +296,21 @@
          }
      }
  
@@ -313,7 +321,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
      /*
       * @see ISourceViewer#configure(SourceViewerConfiguration)
       */
-@@ -296,12 +359,15 @@
+@@ -296,12 +360,15 @@
                  		fAutoEditStrategy = new DefaultAutoIndentStrategy();
                  }
              }
@@ -330,7 +338,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer
      }
  
      /*
-@@ -332,6 +398,5 @@
+@@ -332,6 +399,5 @@
          //	if (fPreferenceStore != null)
          //	    fPreferenceStore.removePropertyChangeListener(this);
          super.unconfigure();
