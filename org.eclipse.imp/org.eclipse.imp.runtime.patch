@@ -1,3 +1,29 @@
+Index: org.eclipse.imp.metatooling/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.metatooling/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.metatooling/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-SymbolicName: org.eclipse.imp.metatooling;singleton:=true
+ Bundle-Name: IMP Language Support Meta-Tooling (Incubation)
+ Bundle-Vendor: rfuhrer@watson.ibm.com
+-Bundle-Version: 0.1.92
++Bundle-Version: 0.1.92.qualifier
+ Bundle-Activator: org.eclipse.imp.WizardPlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+Index: org.eclipse.imp.lpg/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.lpg/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.lpg/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: LPG IDE & Meta-tooling (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.lpg
+-Bundle-Version: 0.1.84
++Bundle-Version: 0.1.84.qualifier
+ Bundle-Activator: org.eclipse.imp.lpg.Activator
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java	(revision 22255)
@@ -824,3 +850,156 @@ Index: org.eclipse.imp.runtime/META-INF/MANIFEST.MF
   org.eclipse.imp.indexing,
   org.eclipse.imp.language,
   org.eclipse.imp.model,
+Index: org.eclipse.imp.java.hosted/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.java.hosted/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.java.hosted/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: IMP Support for Java-Hosted Languages (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.java.hosted
+-Bundle-Version: 0.1.2
++Bundle-Version: 0.1.2.qualifier
+ Bundle-Activator: org.eclipse.imp.java.hosted.Activator
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+Index: org.eclipse.imp.presentation/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.presentation/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.presentation/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: IMP Presentation Specifications (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.presentation;singleton:=true
+-Bundle-Version: 0.1.7
++Bundle-Version: 0.1.7.qualifier
+ Bundle-Activator: org.eclipse.imp.presentation.PSPActivator
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+Index: org.eclipse.imp.lpg.ide/plugin.xml
+===================================================================
+--- org.eclipse.imp.lpg.ide/plugin.xml	(revision 22255)
++++ org.eclipse.imp.lpg.ide/plugin.xml	(working copy)
+@@ -244,15 +244,6 @@
+       </entityNameLocator>
+    </extension>
+    <extension
+-         point="org.eclipse.ui.preferencePages">
+-      <page
+-            name="LPG"
+-            class="org.eclipse.imp.lpg.preferences.LPGPreferencePage"
+-            id="org.eclipse.imp.lpg.preferences.LPG">
+-      </page>
+-   </extension>
+-
+-   <extension
+          id="docBuilder"
+          name="LPG Grammar Documentation Builder"
+          point="org.eclipse.core.resources.builders">
+@@ -265,9 +256,18 @@
+    <extension
+          point="org.eclipse.help.toc">
+       <toc
+-            category="IMP"
+             file="doc/toc.xml"
+-            primary="true">
++            primary="true"
++            category="IMP">
+       </toc>
+    </extension>
++   <extension
++         point="org.eclipse.ui.preferencePages">
++      <page
++            name="LPG"
++            class="org.eclipse.imp.lpg.preferences.LPGPreferencePage"
++            id="org.eclipse.imp.lpg.preferences.LPG">
++      </page>
++   </extension>
++
+ </plugin>
+Index: org.eclipse.imp.lpg.ide/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.lpg.ide/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.lpg.ide/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: LPG IDE Runtime (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.lpg.ide;singleton:=true
+-Bundle-Version: 0.1.87
++Bundle-Version: 0.1.87.qualifier
+ Bundle-Activator: org.eclipse.imp.lpg.LPGRuntimePlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+@@ -12,7 +12,6 @@
+  org.eclipse.core.runtime,
+  org.eclipse.core.resources,
+  org.eclipse.core.variables,
+- org.eclipse.help.ui;bundle-version="3.4.0",
+  org.eclipse.imp.runtime,
+  org.eclipse.imp.smapifier,
+  org.eclipse.imp.xform,
+Index: org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF	(working copy)
+@@ -4,7 +4,7 @@
+ Bundle-Activator: org.eclipse.imp.prefspecs.PrefspecsPlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+-Bundle-Version: 0.1.89
++Bundle-Version: 0.1.89.qualifier
+ Require-Bundle: lpg.runtime,
+  org.eclipse.core.runtime,
+  org.eclipse.core.resources,
+Index: org.eclipse.imp.xform/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.xform/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.xform/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: IMP Transformation Toolkit (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.xform; singleton:=true
+-Bundle-Version: 0.1.91
++Bundle-Version: 0.1.91.qualifier
+ Bundle-Activator: org.eclipse.imp.xform.XformPlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+Index: org.eclipse.imp.preferences/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.preferences/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.preferences/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: IMP Preferences Meta-tooling (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.preferences;singleton:=true
+-Bundle-Version: 0.1.86
++Bundle-Version: 0.1.86.qualifier
+ Bundle-Activator: org.eclipse.imp.preferences.PreferencesPlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+Index: org.eclipse.imp.smapi/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.smapi/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.smapi/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: SMAP support (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.smapi
+-Bundle-Version: 0.1.89.2
++Bundle-Version: 0.1.89.qualifier
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+ Export-Package: org.eclipse.imp.smapi
+Index: org.eclipse.imp.smapifier/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.smapifier/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.smapifier/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: SMAP Builder (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.smapifier;singleton:=true
+-Bundle-Version: 0.1.89.2
++Bundle-Version: 0.1.89.qualifier
+ Bundle-Activator: org.eclipse.imp.smapifier.SmapiePlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
