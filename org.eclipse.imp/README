@@ -5,3 +5,21 @@ This directory contains source patches for the following IMP revision:
 Note that building IMP from source code is not required for building Spoofax/IMP;
 instead, the latest Spoofax/IMP binary plugin can be installed and used as a
 baseline for rebuilding the remainder of the components.
+
+We currently use the following plugins to build Spoofax/IMP:
+
+- com.ibm.wala.shrike
+- lpg.runtime.java (version 2.0.17 with an added qualifier; 2.0.17.qualifier)
+- org.eclipse.imp.cheatsheets
+- org.eclipse.imp.java.hosted
+- org.eclipse.imp.lpg
+- org.eclipse.imp.lpg.ide
+- org.eclipse.imp.lpg.metatooling
+- org.eclipse.imp.metatooling
+- org.eclipse.imp.preferences
+- org.eclipse.imp.prefspecs
+- org.eclipse.imp.presentation
+- org.eclipse.imp.runtime
+- org.eclipse.imp.smapi
+- org.eclipse.imp.smapifier
+- org.eclipse.imp.xform
