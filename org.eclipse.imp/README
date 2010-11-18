@@ -8,8 +8,6 @@ baseline for rebuilding the remainder of the components.
 
 We currently use the following plugins to build Spoofax/IMP:
 
-- com.ibm.wala.shrike
-- lpg.runtime.java (version 2.0.17 with an added qualifier; 2.0.17.qualifier)
 - org.eclipse.imp.cheatsheets
 - org.eclipse.imp.java.hosted
 - org.eclipse.imp.lpg
@@ -23,3 +21,8 @@ We currently use the following plugins to build Spoofax/IMP:
 - org.eclipse.imp.smapi
 - org.eclipse.imp.smapifier
 - org.eclipse.imp.xform
+
+And:
+- com.ibm.wala.shrike (https://wala.svn.sourceforge.net/svnroot/wala/trunk/com.ibm.wala.shrike@r3073)
+- lpg.runtime.java (version 2.0.17.qualifier, mirrored at https://svn.strategoxt.org/repos/StrategoXT/sglr-recovery/trunk/lpg.runtime.java)
+
