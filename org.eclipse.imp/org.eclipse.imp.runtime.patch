@@ -512,7 +512,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/internal/PresentationC
              int end= locator.getEndOffset(token);
  
 -            if (offset <= prevEnd && end >= prevOffset) {
-+            if (offset <= prevEnd /*&& end >= prevOffset*/) { // LK: Avoid illegal styleRange
++            if (offset <= prevEnd || end <= prevEnd /*&& end >= prevOffset*/) { // LK: Avoid illegal styleRange
                  continue;
              }
              changeTokenPresentation(parseController, presentation, token, locator);
