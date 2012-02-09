@@ -53,7 +53,23 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  		                    return lang;
  		                }
  		            } else {
-@@ -383,7 +395,10 @@
+@@ -174,6 +186,7 @@
+ 		    }
+ 		}
+ 
++		/* LK: We can return null; let the client handle it!
+ 		if (PreferenceCache.emitMessages) {
+ 			RuntimePlugin.getInstance().writeErrorMsg("No language support for text/source file of type '" +
+ 					 extension + "'.");
+@@ -181,6 +194,7 @@
+ 			ErrorHandler.reportError("No language support for text/source file of type '" +
+ 					 extension + "'.");
+ 		}
++		*/
+ 
+ 		return null;
+ 	}
+@@ -383,7 +397,10 @@
          for (String ext : extensions) {
  	        IFileEditorMapping mapping= findMappingFor(ext, mappings);
  
