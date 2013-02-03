@@ -1,22 +1,42 @@
-Index: org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java
+Index: org.eclipse.imp.metatooling/META-INF/MANIFEST.MF
 ===================================================================
---- org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java	(revision 22255)
-+++ org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java	(working copy)
-@@ -23,7 +23,8 @@
- 
-     private Stack<ModelTreeNode> fItemStack= new Stack<ModelTreeNode>();
- 
--    public final ModelTreeNode buildTree(Object rootASTNode) {
-+    // LK: public interface shouldn't be final
-+    public ModelTreeNode buildTree(Object rootASTNode) {
-         fItemStack.push(fModelRoot= createTopItem(new ModelTreeNode(rootASTNode)));
-         try {
-             visitTree(rootASTNode);
+--- org.eclipse.imp.metatooling/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.metatooling/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-SymbolicName: org.eclipse.imp.metatooling;singleton:=true
+ Bundle-Name: IMP Language Support Meta-Tooling (Incubation)
+ Bundle-Vendor: rfuhrer@watson.ibm.com
+-Bundle-Version: 0.1.92
++Bundle-Version: 0.1.925900.qualifier
+ Bundle-Activator: org.eclipse.imp.WizardPlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+Index: org.eclipse.imp.lpg/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.lpg/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.lpg/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: LPG IDE & Meta-tooling (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.lpg
+-Bundle-Version: 0.1.84
++Bundle-Version: 0.1.845900.qualifier
+ Bundle-Activator: org.eclipse.imp.lpg.Activator
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java	(revision 22255)
 +++ org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java	(working copy)
-@@ -21,6 +21,8 @@
+@@ -14,6 +14,7 @@
+ import java.io.BufferedInputStream;
+ import java.io.IOException;
+ import java.io.InputStream;
++import java.net.URL;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.Collections;
+@@ -21,6 +22,8 @@
  import java.util.List;
  import java.util.Map;
  
@@ -25,7 +45,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  import org.eclipse.core.runtime.IConfigurationElement;
  import org.eclipse.core.runtime.IExtensionPoint;
  import org.eclipse.core.runtime.IPath;
-@@ -134,7 +136,15 @@
+@@ -134,7 +137,15 @@
  	public static Language findLanguage(IEditorInput editorInput, IDocumentProvider docProvider) {
  		if (!sIsFullyInitialized)
  			initializeRegistryAsNeeded();
@@ -42,7 +62,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  
  		return findLanguage(path, docProvider.getDocument(editorInput));
  	}
-@@ -164,7 +174,9 @@
+@@ -164,7 +175,9 @@
  		            LanguageValidator validator = lang.getValidator();
  
  		            if (validator != null && docContents != null) {
@@ -53,7 +73,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  		                    return lang;
  		                }
  		            } else {
-@@ -174,6 +186,7 @@
+@@ -174,6 +187,7 @@
  		    }
  		}
  
@@ -61,7 +81,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  		if (PreferenceCache.emitMessages) {
  			RuntimePlugin.getInstance().writeErrorMsg("No language support for text/source file of type '" +
  					 extension + "'.");
-@@ -181,6 +194,7 @@
+@@ -181,6 +195,7 @@
  			ErrorHandler.reportError("No language support for text/source file of type '" +
  					 extension + "'.");
  		}
@@ -69,7 +89,20 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  
  		return null;
  	}
-@@ -383,7 +397,10 @@
+@@ -326,7 +341,11 @@
+ 
+             try {
+                 if (this.iconPath != null) {
+-                    is = bundle.getResource(iconPath).openStream();
++                	// VV to avoid a NullPointerException
++                	URL icpath = bundle.getResource(iconPath);
++                	if(icpath != null){
++                		is = icpath.openStream();
++                	}
+                 }
+             } catch (IOException e) {
+                 RuntimePlugin.getInstance().logException("Unable to find icon for language " + langName, e);
+@@ -383,7 +402,10 @@
          for (String ext : extensions) {
  	        IFileEditorMapping mapping= findMappingFor(ext, mappings);
  
@@ -81,6 +114,300 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  	            // Replace the file editor mapping even if it already pointed to the universal editor,
  	            // since the persisted association turns into a FileEditorMapping when re-read, thus
  	            // losing the icon (which FileEditorMapping gets from the IEditorDescriptor).
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/services/base/TreeModelBuilderBase.java	(working copy)
+@@ -23,7 +23,8 @@
+ 
+     private Stack<ModelTreeNode> fItemStack= new Stack<ModelTreeNode>();
+ 
+-    public final ModelTreeNode buildTree(Object rootASTNode) {
++    // LK: public interface shouldn't be final
++    public ModelTreeNode buildTree(Object rootASTNode) {
+         fItemStack.push(fModelRoot= createTopItem(new ModelTreeNode(rootASTNode)));
+         try {
+             visitTree(rootASTNode);
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java	(working copy)
+@@ -48,6 +48,11 @@
+         if (fLanguageServiceManager.getHyperLinkDetector() != null)
+             fHyperLinkController= new SourceHyperlinkController(fLanguageServiceManager.getHyperLinkDetector(), fTextEditor);
+     }
++    
++    public ServiceControllerManager() { // LK: TODO: REMOVE ME
++    	fTextEditor = null;
++    
++    }
+ 
+     public void initialize() {
+         IRegionSelectionService regionSelector= (IRegionSelectionService) fTextEditor.getAdapter(IRegionSelectionService.class);
+Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer.java
+===================================================================
+--- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer.java	(revision 22255)
++++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer.java	(working copy)
+@@ -7,7 +7,6 @@
+ *
+ * Contributors:
+ *    Robert Fuhrer (rfuhrer@watson.ibm.com) - initial API and implementation
+-
+ *******************************************************************************/
+ 
+ package org.eclipse.imp.editor;
+@@ -16,6 +15,7 @@
+ 
+ import org.eclipse.imp.editor.UniversalEditor.StructuredSourceViewerConfiguration;
+ import org.eclipse.imp.parser.IParseController;
++import org.eclipse.imp.runtime.RuntimePlugin;
+ import org.eclipse.imp.services.IAutoEditStrategy;
+ import org.eclipse.imp.services.ILanguageSyntaxProperties;
+ import org.eclipse.imp.services.base.DefaultAutoIndentStrategy;
+@@ -35,6 +35,7 @@
+ import org.eclipse.swt.graphics.Color;
+ import org.eclipse.swt.graphics.Point;
+ import org.eclipse.swt.widgets.Composite;
++// LK: backported from revision 22255
+ 
+ public class StructuredSourceViewer extends ProjectionViewer {
+     /**
+@@ -63,7 +64,6 @@
+      */
+     public static final int MARK_OCCURRENCES= 55;
+ 
+-    // mmk 4/8/08
+     /**
+      * Text operation code for indenting the currently selected text.
+      */
+@@ -77,16 +77,8 @@
+ 
+     private IAutoEditStrategy fAutoEditStrategy;
+ 
+-    // SMS 29 May 2007
+     private IParseController fParseController;
+     
+-    /**
+-     * Is this source viewer configured?
+-     *
+-     * @since 3.0
+-     */
+-    private boolean fIsConfigured;
+-
+     public StructuredSourceViewer(Composite parent, IVerticalRuler verticalRuler, IOverviewRuler overviewRuler, boolean showAnnotationsOverview, int styles) {
+         super(parent, verticalRuler, overviewRuler, showAnnotationsOverview, styles);
+     }
+@@ -139,8 +131,7 @@
+         }
+         super.doOperation(operation);
+     }
+-    
+-    // SMS 29 May 2007 (see doToggleComment())
++
+     public void setParseController(IParseController parseController) {
+     	fParseController = parseController;
+     }
+@@ -152,13 +143,14 @@
+     private void doToggleComment() {
+         ILanguageSyntaxProperties syntaxProps= fParseController.getSyntaxProperties();
+ 
+-        if (syntaxProps == null)
++        // LK: single line comment prefix can be null
++        if (syntaxProps == null || syntaxProps.getSingleLineCommentPrefix() == null)
+             return;
+ 
+         IDocument doc= this.getDocument();
+         DocumentRewriteSession rewriteSession= null;
+         Point p= this.getSelectedRange();
+-        final String lineCommentStart= syntaxProps.getSingleLineCommentPrefix();
++        final String lineCommentPrefix= syntaxProps.getSingleLineCommentPrefix();
+ 
+     	if (doc instanceof IDocumentExtension4) {
+     	    IDocumentExtension4 extension= (IDocumentExtension4) doc;
+@@ -172,22 +164,35 @@
+             final int startLine= doc.getLineOfOffset(selStart);
+             int endLine= doc.getLineOfOffset(selEnd);
+ 
+-            if (selLen > 0 && doc.getChar(selEnd - 1) == '\n')
++            if (selLen > 0 && lookingAtLineEnd(doc, selEnd))
+                 endLine--;
++
++            boolean linesAllHaveCommentPrefix= linesHaveCommentPrefix(doc, lineCommentPrefix, startLine, endLine);
++        	boolean useCommonLeadingSpace= true; // take from a preference?
++			int leadingSpaceToUse= useCommonLeadingSpace ? calculateLeadingSpace(doc, startLine, endLine) : 0;
++
+             for(int line= startLine; line <= endLine; line++) {
+-                int lineStartOffset= doc.getLineOffset(line);
+-                int offset= lineStartOffset;
++                int lineStart= doc.getLineOffset(line);
++                int lineEnd= lineStart + doc.getLineLength(line) - 1;
+ 
+-                while (Character.isWhitespace(doc.getChar(offset)) && offset < doc.getLength())
+-                    offset++;
+-                if (doc.get(offset, lineCommentStart.length()).equals(lineCommentStart)) {
+-                    int len= lineCommentStart.length();
+-
+-                    while (Character.isWhitespace(doc.getChar(offset + len)))
+-                        len++;
+-                    doc.replace(offset, len, "");
+-                } else
+-                    doc.replace(offset, 0, lineCommentStart + " ");
++                if (linesAllHaveCommentPrefix) {
++                	// remove the comment prefix from each line, wherever it occurs in the line
++                	int offset= lineStart;
++                    while (Character.isWhitespace(doc.getChar(offset)) && offset < lineEnd) {
++                        offset++;
++                    }
++                    // LK: remove additional space after comment prefix
++                    int offsetEnd = offset + lineCommentPrefix.length();
++					if (offsetEnd < lineEnd && doc.getChar(offsetEnd) == ' ') {
++						doc.replace(offset, lineCommentPrefix.length() + 1, "");
++					} else {
++						doc.replace(offset, lineCommentPrefix.length(), "");
++					}
++                } else {
++                	// add the comment prefix to each line, after however many spaces leadingSpaceToAdd indicates
++                	int offset= lineStart + leadingSpaceToUse;
++                	doc.replace(offset, 0, lineCommentPrefix + " ");
++                }
+             }
+         } catch (BadLocationException e) {
+             e.printStackTrace();
+@@ -200,8 +205,54 @@
+         }
+     }
+ 
+-    // mmk 4/8/08
+-    private void doIndentLines() {
++    private int calculateLeadingSpace(IDocument doc, int startLine, int endLine) {
++    	try {
++        	int result= Integer.MAX_VALUE;
++        	for(int line= startLine; line <= endLine; line++) {
++        		int lineStart= doc.getLineOffset(line);
++        		int lineEnd= lineStart + doc.getLineLength(line) - 1;
++        		int offset= lineStart;
++        		while (Character.isWhitespace(doc.getChar(offset)) && offset < lineEnd) {
++        			offset++;
++        		}
++        		int leadingSpaces= offset - lineStart;
++				result= Math.min(result, leadingSpaces);
++        	}
++    		return result;
++    	} catch (BadLocationException e) {
++    		return 0;
++    	}
++	}
++
++	/**
++     * @return true, if the given inclusive range of lines all start with the single-line comment prefix,
++     * even if they have different amounts of leading whitespace
++     */
++    private boolean linesHaveCommentPrefix(IDocument doc, String lineCommentPrefix, int startLine, int endLine) {
++    	try {
++    		int docLen= doc.getLength();
++
++    		for(int line= startLine; line <= endLine; line++) {
++                int lineStart= doc.getLineOffset(line);
++                int lineEnd= lineStart + doc.getLineLength(line) - 1;
++                int offset= lineStart;
++
++                while (Character.isWhitespace(doc.getChar(offset)) && offset < lineEnd) {
++                    offset++;
++                }
++                if (docLen - offset > lineCommentPrefix.length() && doc.get(offset, lineCommentPrefix.length()).equals(lineCommentPrefix)) {
++                	// this line starts with the single-line comment prefix
++                } else {
++                	return false;
++                }
++            }
++    	} catch (BadLocationException e) {
++    		return false;
++    	}
++		return true;
++	}
++
++	private void doIndentLines() {
+         IDocument doc= this.getDocument();
+         DocumentRewriteSession rewriteSession= null;
+         Point p= this.getSelectedRange();
+@@ -218,18 +269,16 @@
+             final int startLine= doc.getLineOfOffset(selStart);
+             int endLine= doc.getLineOfOffset(selEnd);
+ 
+-            if (selLen > 0 && doc.getChar(selEnd - 1) == '\n')
++            if (selLen > 0 && lookingAtLineEnd(doc, selEnd))
+                 endLine--;
+             for(int line= startLine; line <= endLine; line++) {
+                 int lineStartOffset= doc.getLineOffset(line);
+-                int offset= lineStartOffset;
+ 
+-                // Replace the indent with desired indent
+-                // make use of the language-specific AutoEditStrategy
+-                // This strategy assumes keystroke input, so infrastructure requires a key event/DocumentCommand to work.
++                // Replace the existing indentation with the desired indentation.
++                // Use the language-specific AutoEditStrategy, which requires a DocumentCommand.
+                 DocumentCommand cmd= new DocumentCommand() { };
+                 cmd.offset= lineStartOffset;
+-                cmd.length= 1;
++                cmd.length= 0;
+                 cmd.text= Character.toString('\t');
+                 cmd.doit= true;
+                 cmd.shiftsCaret= false;
+@@ -237,7 +286,7 @@
+                 doc.replace(cmd.offset, cmd.length, cmd.text);
+             }
+         } catch (BadLocationException e) {
+-            e.printStackTrace();
++            RuntimePlugin.getInstance().logException("Indent Selection command failed", e);
+         } finally {
+             if (doc instanceof IDocumentExtension4) {
+                 IDocumentExtension4 extension= (IDocumentExtension4) doc;
+@@ -247,6 +296,21 @@
+         }
+     }
+ 
++    private boolean lookingAtLineEnd(IDocument doc, int pos) {
++        String[] legalLineTerms= doc.getLegalLineDelimiters();
++        try {
++            for(String lineTerm: legalLineTerms) {
++                int len= lineTerm.length();
++                if (pos > len && doc.get(pos - len, len).equals(lineTerm)) {
++                    return true;
++                }
++            }
++        } catch (BadLocationException e) {
++            RuntimePlugin.getInstance().logException("Error examining document for line termination", e);
++        }
++        return false;
++    }
++
+     /*
+      * @see ISourceViewer#configure(SourceViewerConfiguration)
+      */
+@@ -296,12 +360,15 @@
+                 		fAutoEditStrategy = new DefaultAutoIndentStrategy();
+                 }
+             }
++            
++            fQuickAssistAssistant = sSVConfiguration.getQuickAssistAssistant(this);
++            if (fQuickAssistAssistant != null)
++            	fQuickAssistAssistant.install(this);
+         }
+         //	if (fPreferenceStore != null) {
+         //	    fPreferenceStore.addPropertyChangeListener(this);
+         //	    initializeViewerColors();
+         //	}
+-        fIsConfigured= true;
+     }
+ 
+     /*
+@@ -332,6 +399,5 @@
+         //	if (fPreferenceStore != null)
+         //	    fPreferenceStore.removePropertyChangeListener(this);
+         super.unconfigure();
+-        fIsConfigured= false;
+     }
+ }
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ParserScheduler.java	(revision 22255)
@@ -462,286 +789,6 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/UniversalEditor.java
  	}
  
      public void removeParserAnnotations() {
-Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java
-===================================================================
---- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java	(revision 22255)
-+++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/ServiceControllerManager.java	(working copy)
-@@ -48,6 +48,11 @@
-         if (fLanguageServiceManager.getHyperLinkDetector() != null)
-             fHyperLinkController= new SourceHyperlinkController(fLanguageServiceManager.getHyperLinkDetector(), fTextEditor);
-     }
-+    
-+    public ServiceControllerManager() { // LK: TODO: REMOVE ME
-+    	fTextEditor = null;
-+    
-+    }
- 
-     public void initialize() {
-         IRegionSelectionService regionSelector= (IRegionSelectionService) fTextEditor.getAdapter(IRegionSelectionService.class);
-Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer.java
-===================================================================
---- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer.java	(revision 22255)
-+++ org.eclipse.imp.runtime/src/org/eclipse/imp/editor/StructuredSourceViewer.java	(working copy)
-@@ -7,7 +7,6 @@
- *
- * Contributors:
- *    Robert Fuhrer (rfuhrer@watson.ibm.com) - initial API and implementation
--
- *******************************************************************************/
- 
- package org.eclipse.imp.editor;
-@@ -16,6 +15,7 @@
- 
- import org.eclipse.imp.editor.UniversalEditor.StructuredSourceViewerConfiguration;
- import org.eclipse.imp.parser.IParseController;
-+import org.eclipse.imp.runtime.RuntimePlugin;
- import org.eclipse.imp.services.IAutoEditStrategy;
- import org.eclipse.imp.services.ILanguageSyntaxProperties;
- import org.eclipse.imp.services.base.DefaultAutoIndentStrategy;
-@@ -35,6 +35,7 @@
- import org.eclipse.swt.graphics.Color;
- import org.eclipse.swt.graphics.Point;
- import org.eclipse.swt.widgets.Composite;
-+// LK: backported from revision 22255
- 
- public class StructuredSourceViewer extends ProjectionViewer {
-     /**
-@@ -63,7 +64,6 @@
-      */
-     public static final int MARK_OCCURRENCES= 55;
- 
--    // mmk 4/8/08
-     /**
-      * Text operation code for indenting the currently selected text.
-      */
-@@ -77,16 +77,8 @@
- 
-     private IAutoEditStrategy fAutoEditStrategy;
- 
--    // SMS 29 May 2007
-     private IParseController fParseController;
-     
--    /**
--     * Is this source viewer configured?
--     *
--     * @since 3.0
--     */
--    private boolean fIsConfigured;
--
-     public StructuredSourceViewer(Composite parent, IVerticalRuler verticalRuler, IOverviewRuler overviewRuler, boolean showAnnotationsOverview, int styles) {
-         super(parent, verticalRuler, overviewRuler, showAnnotationsOverview, styles);
-     }
-@@ -139,8 +131,7 @@
-         }
-         super.doOperation(operation);
-     }
--    
--    // SMS 29 May 2007 (see doToggleComment())
-+
-     public void setParseController(IParseController parseController) {
-     	fParseController = parseController;
-     }
-@@ -152,13 +143,14 @@
-     private void doToggleComment() {
-         ILanguageSyntaxProperties syntaxProps= fParseController.getSyntaxProperties();
- 
--        if (syntaxProps == null)
-+        // LK: single line comment prefix can be null
-+        if (syntaxProps == null || syntaxProps.getSingleLineCommentPrefix() == null)
-             return;
- 
-         IDocument doc= this.getDocument();
-         DocumentRewriteSession rewriteSession= null;
-         Point p= this.getSelectedRange();
--        final String lineCommentStart= syntaxProps.getSingleLineCommentPrefix();
-+        final String lineCommentPrefix= syntaxProps.getSingleLineCommentPrefix();
- 
-     	if (doc instanceof IDocumentExtension4) {
-     	    IDocumentExtension4 extension= (IDocumentExtension4) doc;
-@@ -172,22 +164,35 @@
-             final int startLine= doc.getLineOfOffset(selStart);
-             int endLine= doc.getLineOfOffset(selEnd);
- 
--            if (selLen > 0 && doc.getChar(selEnd - 1) == '\n')
-+            if (selLen > 0 && lookingAtLineEnd(doc, selEnd))
-                 endLine--;
-+
-+            boolean linesAllHaveCommentPrefix= linesHaveCommentPrefix(doc, lineCommentPrefix, startLine, endLine);
-+        	boolean useCommonLeadingSpace= true; // take from a preference?
-+			int leadingSpaceToUse= useCommonLeadingSpace ? calculateLeadingSpace(doc, startLine, endLine) : 0;
-+
-             for(int line= startLine; line <= endLine; line++) {
--                int lineStartOffset= doc.getLineOffset(line);
--                int offset= lineStartOffset;
-+                int lineStart= doc.getLineOffset(line);
-+                int lineEnd= lineStart + doc.getLineLength(line) - 1;
- 
--                while (Character.isWhitespace(doc.getChar(offset)) && offset < doc.getLength())
--                    offset++;
--                if (doc.get(offset, lineCommentStart.length()).equals(lineCommentStart)) {
--                    int len= lineCommentStart.length();
--
--                    while (Character.isWhitespace(doc.getChar(offset + len)))
--                        len++;
--                    doc.replace(offset, len, "");
--                } else
--                    doc.replace(offset, 0, lineCommentStart + " ");
-+                if (linesAllHaveCommentPrefix) {
-+                	// remove the comment prefix from each line, wherever it occurs in the line
-+                	int offset= lineStart;
-+                    while (Character.isWhitespace(doc.getChar(offset)) && offset < lineEnd) {
-+                        offset++;
-+                    }
-+                    // LK: remove additional space after comment prefix
-+                    int offsetEnd = offset + lineCommentPrefix.length();
-+					if (offsetEnd < lineEnd && doc.getChar(offsetEnd) == ' ') {
-+						doc.replace(offset, lineCommentPrefix.length() + 1, "");
-+					} else {
-+						doc.replace(offset, lineCommentPrefix.length(), "");
-+					}
-+                } else {
-+                	// add the comment prefix to each line, after however many spaces leadingSpaceToAdd indicates
-+                	int offset= lineStart + leadingSpaceToUse;
-+                	doc.replace(offset, 0, lineCommentPrefix + " ");
-+                }
-             }
-         } catch (BadLocationException e) {
-             e.printStackTrace();
-@@ -200,8 +205,54 @@
-         }
-     }
- 
--    // mmk 4/8/08
--    private void doIndentLines() {
-+    private int calculateLeadingSpace(IDocument doc, int startLine, int endLine) {
-+    	try {
-+        	int result= Integer.MAX_VALUE;
-+        	for(int line= startLine; line <= endLine; line++) {
-+        		int lineStart= doc.getLineOffset(line);
-+        		int lineEnd= lineStart + doc.getLineLength(line) - 1;
-+        		int offset= lineStart;
-+        		while (Character.isWhitespace(doc.getChar(offset)) && offset < lineEnd) {
-+        			offset++;
-+        		}
-+        		int leadingSpaces= offset - lineStart;
-+				result= Math.min(result, leadingSpaces);
-+        	}
-+    		return result;
-+    	} catch (BadLocationException e) {
-+    		return 0;
-+    	}
-+	}
-+
-+	/**
-+     * @return true, if the given inclusive range of lines all start with the single-line comment prefix,
-+     * even if they have different amounts of leading whitespace
-+     */
-+    private boolean linesHaveCommentPrefix(IDocument doc, String lineCommentPrefix, int startLine, int endLine) {
-+    	try {
-+    		int docLen= doc.getLength();
-+
-+    		for(int line= startLine; line <= endLine; line++) {
-+                int lineStart= doc.getLineOffset(line);
-+                int lineEnd= lineStart + doc.getLineLength(line) - 1;
-+                int offset= lineStart;
-+
-+                while (Character.isWhitespace(doc.getChar(offset)) && offset < lineEnd) {
-+                    offset++;
-+                }
-+                if (docLen - offset > lineCommentPrefix.length() && doc.get(offset, lineCommentPrefix.length()).equals(lineCommentPrefix)) {
-+                	// this line starts with the single-line comment prefix
-+                } else {
-+                	return false;
-+                }
-+            }
-+    	} catch (BadLocationException e) {
-+    		return false;
-+    	}
-+		return true;
-+	}
-+
-+	private void doIndentLines() {
-         IDocument doc= this.getDocument();
-         DocumentRewriteSession rewriteSession= null;
-         Point p= this.getSelectedRange();
-@@ -218,18 +269,16 @@
-             final int startLine= doc.getLineOfOffset(selStart);
-             int endLine= doc.getLineOfOffset(selEnd);
- 
--            if (selLen > 0 && doc.getChar(selEnd - 1) == '\n')
-+            if (selLen > 0 && lookingAtLineEnd(doc, selEnd))
-                 endLine--;
-             for(int line= startLine; line <= endLine; line++) {
-                 int lineStartOffset= doc.getLineOffset(line);
--                int offset= lineStartOffset;
- 
--                // Replace the indent with desired indent
--                // make use of the language-specific AutoEditStrategy
--                // This strategy assumes keystroke input, so infrastructure requires a key event/DocumentCommand to work.
-+                // Replace the existing indentation with the desired indentation.
-+                // Use the language-specific AutoEditStrategy, which requires a DocumentCommand.
-                 DocumentCommand cmd= new DocumentCommand() { };
-                 cmd.offset= lineStartOffset;
--                cmd.length= 1;
-+                cmd.length= 0;
-                 cmd.text= Character.toString('\t');
-                 cmd.doit= true;
-                 cmd.shiftsCaret= false;
-@@ -237,7 +286,7 @@
-                 doc.replace(cmd.offset, cmd.length, cmd.text);
-             }
-         } catch (BadLocationException e) {
--            e.printStackTrace();
-+            RuntimePlugin.getInstance().logException("Indent Selection command failed", e);
-         } finally {
-             if (doc instanceof IDocumentExtension4) {
-                 IDocumentExtension4 extension= (IDocumentExtension4) doc;
-@@ -247,6 +296,21 @@
-         }
-     }
- 
-+    private boolean lookingAtLineEnd(IDocument doc, int pos) {
-+        String[] legalLineTerms= doc.getLegalLineDelimiters();
-+        try {
-+            for(String lineTerm: legalLineTerms) {
-+                int len= lineTerm.length();
-+                if (pos > len && doc.get(pos - len, len).equals(lineTerm)) {
-+                    return true;
-+                }
-+            }
-+        } catch (BadLocationException e) {
-+            RuntimePlugin.getInstance().logException("Error examining document for line termination", e);
-+        }
-+        return false;
-+    }
-+
-     /*
-      * @see ISourceViewer#configure(SourceViewerConfiguration)
-      */
-@@ -296,12 +360,15 @@
-                 		fAutoEditStrategy = new DefaultAutoIndentStrategy();
-                 }
-             }
-+            
-+            fQuickAssistAssistant = sSVConfiguration.getQuickAssistAssistant(this);
-+            if (fQuickAssistAssistant != null)
-+            	fQuickAssistAssistant.install(this);
-         }
-         //	if (fPreferenceStore != null) {
-         //	    fPreferenceStore.addPropertyChangeListener(this);
-         //	    initializeViewerColors();
-         //	}
--        fIsConfigured= true;
-     }
- 
-     /*
-@@ -332,6 +399,5 @@
-         //	if (fPreferenceStore != null)
-         //	    fPreferenceStore.removePropertyChangeListener(this);
-         super.unconfigure();
--        fIsConfigured= false;
-     }
- }
 Index: org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/editor/SourceProposal.java	(revision 22255)
@@ -872,6 +919,19 @@ Index: org.eclipse.imp.java.hosted/META-INF/MANIFEST.MF
  Bundle-Activator: org.eclipse.imp.java.hosted.Activator
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
+Index: org.eclipse.imp.presentation/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.presentation/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.presentation/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: IMP Presentation Specifications (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.presentation;singleton:=true
+-Bundle-Version: 0.1.7
++Bundle-Version: 0.1.75900.qualifier
+ Bundle-Activator: org.eclipse.imp.presentation.PSPActivator
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
 Index: org.eclipse.imp.lpg.ide/plugin.xml
 ===================================================================
 --- org.eclipse.imp.lpg.ide/plugin.xml	(revision 22255)
@@ -934,6 +994,19 @@ Index: org.eclipse.imp.lpg.ide/META-INF/MANIFEST.MF
   org.eclipse.imp.runtime,
   org.eclipse.imp.smapifier,
   org.eclipse.imp.xform,
+Index: org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF	(working copy)
+@@ -4,7 +4,7 @@
+ Bundle-Activator: org.eclipse.imp.prefspecs.PrefspecsPlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
+-Bundle-Version: 0.1.89
++Bundle-Version: 0.1.895900.qualifier
+ Require-Bundle: lpg.runtime,
+  org.eclipse.core.runtime,
+  org.eclipse.core.resources,
 Index: org.eclipse.imp.xform/META-INF/MANIFEST.MF
 ===================================================================
 --- org.eclipse.imp.xform/META-INF/MANIFEST.MF	(revision 22255)
@@ -960,71 +1033,6 @@ Index: org.eclipse.imp.preferences/META-INF/MANIFEST.MF
  Bundle-Activator: org.eclipse.imp.preferences.PreferencesPlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
-Index: org.eclipse.imp.smapifier/META-INF/MANIFEST.MF
-===================================================================
---- org.eclipse.imp.smapifier/META-INF/MANIFEST.MF	(revision 22255)
-+++ org.eclipse.imp.smapifier/META-INF/MANIFEST.MF	(working copy)
-@@ -2,7 +2,7 @@
- Bundle-ManifestVersion: 2
- Bundle-Name: SMAP Builder (Incubation)
- Bundle-SymbolicName: org.eclipse.imp.smapifier;singleton:=true
--Bundle-Version: 0.1.89.2
-+Bundle-Version: 0.1.895900.qualifier
- Bundle-Activator: org.eclipse.imp.smapifier.SmapiePlugin
- Bundle-ActivationPolicy: lazy
- Eclipse-LazyStart: true
-Index: org.eclipse.imp.lpg/META-INF/MANIFEST.MF
-===================================================================
---- org.eclipse.imp.lpg/META-INF/MANIFEST.MF	(revision 22255)
-+++ org.eclipse.imp.lpg/META-INF/MANIFEST.MF	(working copy)
-@@ -2,7 +2,7 @@
- Bundle-ManifestVersion: 2
- Bundle-Name: LPG IDE & Meta-tooling (Incubation)
- Bundle-SymbolicName: org.eclipse.imp.lpg
--Bundle-Version: 0.1.84
-+Bundle-Version: 0.1.845900.qualifier
- Bundle-Activator: org.eclipse.imp.lpg.Activator
- Bundle-ActivationPolicy: lazy
- Eclipse-LazyStart: true
-Index: org.eclipse.imp.metatooling/META-INF/MANIFEST.MF
-===================================================================
---- org.eclipse.imp.metatooling/META-INF/MANIFEST.MF	(revision 22255)
-+++ org.eclipse.imp.metatooling/META-INF/MANIFEST.MF	(working copy)
-@@ -2,7 +2,7 @@
- Bundle-SymbolicName: org.eclipse.imp.metatooling;singleton:=true
- Bundle-Name: IMP Language Support Meta-Tooling (Incubation)
- Bundle-Vendor: rfuhrer@watson.ibm.com
--Bundle-Version: 0.1.92
-+Bundle-Version: 0.1.925900.qualifier
- Bundle-Activator: org.eclipse.imp.WizardPlugin
- Bundle-ActivationPolicy: lazy
- Eclipse-LazyStart: true
-Index: org.eclipse.imp.presentation/META-INF/MANIFEST.MF
-===================================================================
---- org.eclipse.imp.presentation/META-INF/MANIFEST.MF	(revision 22255)
-+++ org.eclipse.imp.presentation/META-INF/MANIFEST.MF	(working copy)
-@@ -2,7 +2,7 @@
- Bundle-ManifestVersion: 2
- Bundle-Name: IMP Presentation Specifications (Incubation)
- Bundle-SymbolicName: org.eclipse.imp.presentation;singleton:=true
--Bundle-Version: 0.1.7
-+Bundle-Version: 0.1.75900.qualifier
- Bundle-Activator: org.eclipse.imp.presentation.PSPActivator
- Bundle-ActivationPolicy: lazy
- Eclipse-LazyStart: true
-Index: org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF
-===================================================================
---- org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF	(revision 22255)
-+++ org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF	(working copy)
-@@ -4,7 +4,7 @@
- Bundle-Activator: org.eclipse.imp.prefspecs.PrefspecsPlugin
- Bundle-ActivationPolicy: lazy
- Eclipse-LazyStart: true
--Bundle-Version: 0.1.89
-+Bundle-Version: 0.1.895900.qualifier
- Require-Bundle: lpg.runtime,
-  org.eclipse.core.runtime,
-  org.eclipse.core.resources,
 Index: org.eclipse.imp.smapi/META-INF/MANIFEST.MF
 ===================================================================
 --- org.eclipse.imp.smapi/META-INF/MANIFEST.MF	(revision 22255)
@@ -1038,3 +1046,16 @@ Index: org.eclipse.imp.smapi/META-INF/MANIFEST.MF
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
  Export-Package: org.eclipse.imp.smapi
+Index: org.eclipse.imp.smapifier/META-INF/MANIFEST.MF
+===================================================================
+--- org.eclipse.imp.smapifier/META-INF/MANIFEST.MF	(revision 22255)
++++ org.eclipse.imp.smapifier/META-INF/MANIFEST.MF	(working copy)
+@@ -2,7 +2,7 @@
+ Bundle-ManifestVersion: 2
+ Bundle-Name: SMAP Builder (Incubation)
+ Bundle-SymbolicName: org.eclipse.imp.smapifier;singleton:=true
+-Bundle-Version: 0.1.89.2
++Bundle-Version: 0.1.895900.qualifier
+ Bundle-Activator: org.eclipse.imp.smapifier.SmapiePlugin
+ Bundle-ActivationPolicy: lazy
+ Eclipse-LazyStart: true
