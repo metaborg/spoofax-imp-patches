@@ -7,7 +7,7 @@ Index: org.eclipse.imp.metatooling/META-INF/MANIFEST.MF
  Bundle-Name: IMP Language Support Meta-Tooling (Incubation)
  Bundle-Vendor: rfuhrer@watson.ibm.com
 -Bundle-Version: 0.1.92
-+Bundle-Version: 0.1.92.qualifier
++Bundle-Version: 0.1.925900.qualifier
  Bundle-Activator: org.eclipse.imp.WizardPlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -20,7 +20,7 @@ Index: org.eclipse.imp.lpg/META-INF/MANIFEST.MF
  Bundle-Name: LPG IDE & Meta-tooling (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.lpg
 -Bundle-Version: 0.1.84
-+Bundle-Version: 0.1.84.qualifier
++Bundle-Version: 0.1.845900.qualifier
  Bundle-Activator: org.eclipse.imp.lpg.Activator
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -28,7 +28,15 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
 ===================================================================
 --- org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java	(revision 22255)
 +++ org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.java	(working copy)
-@@ -21,6 +21,8 @@
+@@ -14,6 +14,7 @@
+ import java.io.BufferedInputStream;
+ import java.io.IOException;
+ import java.io.InputStream;
++import java.net.URL;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.Collections;
+@@ -21,6 +22,8 @@
  import java.util.List;
  import java.util.Map;
  
@@ -37,7 +45,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  import org.eclipse.core.runtime.IConfigurationElement;
  import org.eclipse.core.runtime.IExtensionPoint;
  import org.eclipse.core.runtime.IPath;
-@@ -134,7 +136,15 @@
+@@ -134,7 +137,15 @@
  	public static Language findLanguage(IEditorInput editorInput, IDocumentProvider docProvider) {
  		if (!sIsFullyInitialized)
  			initializeRegistryAsNeeded();
@@ -54,7 +62,7 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  
  		return findLanguage(path, docProvider.getDocument(editorInput));
  	}
-@@ -164,7 +174,9 @@
+@@ -164,7 +175,9 @@
  		            LanguageValidator validator = lang.getValidator();
  
  		            if (validator != null && docContents != null) {
@@ -65,7 +73,36 @@ Index: org.eclipse.imp.runtime/src/org/eclipse/imp/language/LanguageRegistry.jav
  		                    return lang;
  		                }
  		            } else {
-@@ -383,7 +395,10 @@
+@@ -174,6 +187,7 @@
+ 		    }
+ 		}
+ 
++		/* LK: We can return null; let the client handle it!
+ 		if (PreferenceCache.emitMessages) {
+ 			RuntimePlugin.getInstance().writeErrorMsg("No language support for text/source file of type '" +
+ 					 extension + "'.");
+@@ -181,6 +195,7 @@
+ 			ErrorHandler.reportError("No language support for text/source file of type '" +
+ 					 extension + "'.");
+ 		}
++		*/
+ 
+ 		return null;
+ 	}
+@@ -326,7 +341,11 @@
+ 
+             try {
+                 if (this.iconPath != null) {
+-                    is = bundle.getResource(iconPath).openStream();
++                	// VV to avoid a NullPointerException
++                	URL icpath = bundle.getResource(iconPath);
++                	if(icpath != null){
++                		is = icpath.openStream();
++                	}
+                 }
+             } catch (IOException e) {
+                 RuntimePlugin.getInstance().logException("Unable to find icon for language " + langName, e);
+@@ -383,7 +402,10 @@
          for (String ext : extensions) {
  	        IFileEditorMapping mapping= findMappingFor(ext, mappings);
  
@@ -857,7 +894,7 @@ Index: org.eclipse.imp.runtime/META-INF/MANIFEST.MF
  Bundle-Name: IMP Runtime (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.runtime; singleton:=true
 -Bundle-Version: 0.1.101
-+Bundle-Version: 0.1.101.qualifier
++Bundle-Version: 0.1.1015900.qualifier
  Bundle-Activator: org.eclipse.imp.runtime.RuntimePlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -878,7 +915,7 @@ Index: org.eclipse.imp.java.hosted/META-INF/MANIFEST.MF
  Bundle-Name: IMP Support for Java-Hosted Languages (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.java.hosted
 -Bundle-Version: 0.1.2
-+Bundle-Version: 0.1.2.qualifier
++Bundle-Version: 0.1.25900.qualifier
  Bundle-Activator: org.eclipse.imp.java.hosted.Activator
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -891,7 +928,7 @@ Index: org.eclipse.imp.presentation/META-INF/MANIFEST.MF
  Bundle-Name: IMP Presentation Specifications (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.presentation;singleton:=true
 -Bundle-Version: 0.1.7
-+Bundle-Version: 0.1.7.qualifier
++Bundle-Version: 0.1.75900.qualifier
  Bundle-Activator: org.eclipse.imp.presentation.PSPActivator
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -945,7 +982,7 @@ Index: org.eclipse.imp.lpg.ide/META-INF/MANIFEST.MF
  Bundle-Name: LPG IDE Runtime (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.lpg.ide;singleton:=true
 -Bundle-Version: 0.1.87
-+Bundle-Version: 0.1.87.qualifier
++Bundle-Version: 0.1.875900.qualifier
  Bundle-Activator: org.eclipse.imp.lpg.LPGRuntimePlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -966,7 +1003,7 @@ Index: org.eclipse.imp.prefspecs/META-INF/MANIFEST.MF
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
 -Bundle-Version: 0.1.89
-+Bundle-Version: 0.1.89.qualifier
++Bundle-Version: 0.1.895900.qualifier
  Require-Bundle: lpg.runtime,
   org.eclipse.core.runtime,
   org.eclipse.core.resources,
@@ -979,7 +1016,7 @@ Index: org.eclipse.imp.xform/META-INF/MANIFEST.MF
  Bundle-Name: IMP Transformation Toolkit (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.xform; singleton:=true
 -Bundle-Version: 0.1.91
-+Bundle-Version: 0.1.91.qualifier
++Bundle-Version: 0.1.915900.qualifier
  Bundle-Activator: org.eclipse.imp.xform.XformPlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -992,7 +1029,7 @@ Index: org.eclipse.imp.preferences/META-INF/MANIFEST.MF
  Bundle-Name: IMP Preferences Meta-tooling (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.preferences;singleton:=true
 -Bundle-Version: 0.1.86
-+Bundle-Version: 0.1.86.qualifier
++Bundle-Version: 0.1.865900.qualifier
  Bundle-Activator: org.eclipse.imp.preferences.PreferencesPlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
@@ -1005,7 +1042,7 @@ Index: org.eclipse.imp.smapi/META-INF/MANIFEST.MF
  Bundle-Name: SMAP support (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.smapi
 -Bundle-Version: 0.1.89.2
-+Bundle-Version: 0.1.89.qualifier
++Bundle-Version: 0.1.895900.qualifier
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
  Export-Package: org.eclipse.imp.smapi
@@ -1018,7 +1055,7 @@ Index: org.eclipse.imp.smapifier/META-INF/MANIFEST.MF
  Bundle-Name: SMAP Builder (Incubation)
  Bundle-SymbolicName: org.eclipse.imp.smapifier;singleton:=true
 -Bundle-Version: 0.1.89.2
-+Bundle-Version: 0.1.89.qualifier
++Bundle-Version: 0.1.895900.qualifier
  Bundle-Activator: org.eclipse.imp.smapifier.SmapiePlugin
  Bundle-ActivationPolicy: lazy
  Eclipse-LazyStart: true
